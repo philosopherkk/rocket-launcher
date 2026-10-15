@@ -1,4 +1,5 @@
 import { Suspense, useEffect } from 'react'
+import { AtmospherePanel } from './components/AtmospherePanel'
 import { Controls } from './components/Controls'
 import { DestinationPanel } from './components/DestinationPanel'
 import { MissionScene } from './components/MissionScene'
@@ -76,6 +77,12 @@ export default function App() {
             phase={phase}
             phaseIndex={phaseIndex}
             destinationId={destinationId}
+          />
+          <AtmospherePanel
+            locale={locale}
+            difficulty={difficulty}
+            destinationId={destinationId}
+            phaseId={phase.id}
           />
           <VehiclePanel locale={locale} />
         </div>

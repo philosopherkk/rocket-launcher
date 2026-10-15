@@ -485,7 +485,7 @@ export const phases: MissionPhase[] = [
           narrative:
             'Starship hits Earth’s atmosphere at very high speed, uses its body to slow down, then lands with engines. Heat protection and precise control are critical.',
           physics:
-            'Air compresses and heats in front of the vehicle, bleeding off speed as heat and light.',
+            'The air ahead is squeezed into a glowing shock layer — that compression (not everyday rubbing friction) creates most of the heat. Speed turns into heat and light as the ship descends through the atmospheric layers.',
           engineering:
             'Heat-shield tiles, flaps for steering, and a final landing burn must all work. SpaceX’s public goal is rapid reuse after catch or landing.',
         },
@@ -494,7 +494,7 @@ export const phases: MissionPhase[] = [
           narrative:
             'Flight tests have practiced high-energy atmospheric return and landing burns for Starship. A lunar-return entry is typically more energetic than many LEO returns—exact operational moon-return numbers are not published here as fact.',
           physics:
-            'Heating roughly scales with entry speed cubed for convective regimes (order-of-magnitude teaching model). Lift-to-drag via flap control shapes the trajectory.',
+            'A bow shock converts kinetic energy to enthalpy. Teaching correlations give stagnation convective flux roughly ∝ √(ρ/R_n)·v³. Dynamic pressure q=½ρv² also loads structure. See the Atmosphere panel for layer-by-layer detail.',
           engineering:
             'Tile integrity, plasma communications blackout, flap actuator authority, and engine relight for landing are concurrent challenges.',
         },
@@ -503,7 +503,7 @@ export const phases: MissionPhase[] = [
           narrative:
             'We do not invent peak heat-rate numbers for a Starship lunar return. Where public data is missing, the lesson states uncertainty and focuses on mechanisms.',
           physics:
-            'Entry flight-path angle must sit in a narrow corridor. Too shallow → skip; too steep → structural/thermal overload.',
+            'Flight-path angle corridor: too shallow → skip-out; too steep → peak heat flux q̇ and load exceedance. At high v∞, shock-layer radiation can add to convection. Knudsen number falls from free-molecular at interface toward continuum in the lower atmosphere.',
           engineering:
             'Challenges: TPS gap fillers and tile loss tolerance, real-time guidance during blackout, and certifying human-rating if crew are aboard—requirements evolve with NASA/SpaceX agreements.',
         },
@@ -513,7 +513,8 @@ export const phases: MissionPhase[] = [
           title: '地球再入與著陸',
           narrative:
             'Starship 以極高速度進入地球大氣，利用身軀減速，再用引擎著陸。熱防護與精確控制至關重要。',
-          physics: '空氣在載具前方被壓縮加熱，把速度轉成熱與光消散。',
+          physics:
+            '前方空氣被擠成發光的激波層——主要是壓縮（不是日常摩擦）產生熱量。船艦穿過各氣層時，速度轉成熱與光消散。',
           engineering:
             '防熱瓦、控制襟翼與最終著陸點火都必須成功。SpaceX 公開目標是著陸或捕捉後快速重複使用。',
         },
@@ -521,14 +522,16 @@ export const phases: MissionPhase[] = [
           title: '大氣再入與終端著陸',
           narrative:
             '飛行測試已演練 Starship 高能量大氣返回與著陸點火。月球返回再入通常比許多近地軌道返回更猛烈——此處不把未公開的作業數據當成事實。',
-          physics: '在教學用數量級模型中，對流加熱大致與再入速度三次方相關。襟翼控制升阻比以塑造軌跡。',
+          physics:
+            '弓形激波把動能轉為焓。教學關聯式給出滯止對流熱流大致 ∝ √(ρ/R_n)·v³。動壓 q=½ρv² 也加載結構。氣層細節見「大氣」面板。',
           engineering: '瓦片完整度、電漿通訊黑障、襟翼作動能力，以及著陸引擎再點火是同時存在的挑戰。',
         },
         advanced: {
           title: '高能量再入級挑戰',
           narrative:
             '我們不虛構 Starship 月球返回的峰值熱流數字。公開數據不足時，課程會標明不確定性並聚焦機制。',
-          physics: '再入飛行路徑角必須落在狹窄走廊。太淺會跳飛；太陡會造成結構／熱過載。',
+          physics:
+            '飛行路徑角走廊：太淺會跳飛；太陡則峰值熱流 q̇ 與載荷超限。高 v∞ 時激波層輻射可疊加對流。克努森數從介面自由分子流降至下層大氣連續流。',
           engineering:
             '挑戰：熱防護系統縫隙填充與掉瓦容錯、黑障期間即時導引，以及乘員在船時的載人認證——需求隨 NASA／SpaceX 協議演進。',
         },

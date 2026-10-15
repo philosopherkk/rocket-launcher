@@ -38,25 +38,26 @@ export function EarthGlobe() {
           />
         </mesh>
       </group>
-      <mesh scale={1.08}>
-        <sphereGeometry args={[2, 48, 48]} />
-        <meshBasicMaterial
-          color="#6eb6ff"
-          transparent
-          opacity={0.11}
-          side={THREE.BackSide}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh scale={1.035}>
-        <sphereGeometry args={[2, 48, 48]} />
-        <meshBasicMaterial
-          color="#9fd2ff"
-          transparent
-          opacity={0.08}
-          depthWrite={false}
-        />
-      </mesh>
+      {/* Stylized shells hinting troposphere → upper atmosphere (not to scale) */}
+      {(
+        [
+          { s: 1.02, c: '#7ec8ff', o: 0.1 },
+          { s: 1.045, c: '#6aa8ff', o: 0.07 },
+          { s: 1.08, c: '#4f8cff', o: 0.05 },
+          { s: 1.12, c: '#3a6ad4', o: 0.035 },
+        ] as const
+      ).map((shell) => (
+        <mesh key={shell.s} scale={shell.s}>
+          <sphereGeometry args={[2, 40, 40]} />
+          <meshBasicMaterial
+            color={shell.c}
+            transparent
+            opacity={shell.o}
+            side={THREE.BackSide}
+            depthWrite={false}
+          />
+        </mesh>
+      ))}
       <mesh position={[2.05, 0.25, 0.2]} rotation={[0, 0, -Math.PI / 2]}>
         <cylinderGeometry args={[0.06, 0.09, 0.16, 10]} />
         <meshStandardMaterial color="#7a828c" metalness={0.6} roughness={0.35} />

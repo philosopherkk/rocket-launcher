@@ -24,24 +24,58 @@ function loadPrefs(): Prefs {
   }
 }
 
+function progressFromUrl(): number | null {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('progress')
+    if (raw == null || raw === '') return null
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return null
+    return Math.min(1, Math.max(0, n))
+  } catch {
+    return null
+  }
+}
+
 export function useMissionState() {
-  const initial = loadPrefs()
-  const [locale, setLocale] = useState<Locale>(initial.locale)
-  const [difficulty, setDifficulty] = useState<Difficulty>(initial.difficulty)
-  const [destinationId, setDestinationId] = useState<DestinationId>(initial.destinationId)
+  const prefs = loadPrefs()
+  const [locale, setLocale] = useState<Locale>(prefs.locale)
+  const [difficulty, setDifficulty] = useState<Difficulty>(prefs.difficulty)
+  const [destinationId, setDestinationId] = useState<DestinationId>(prefs.destinationId)
   const [progress, setProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
   const rafRef = useRef<number | null>(null)
   const lastRef = useRef<number | null>(null)
+  const prevDestination = useRef<DestinationId | null>(null)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ locale, difficulty, destinationId }))
   }, [locale, difficulty, destinationId])
 
-  // Reset playhead when destination changes so the path restart is obvious
+  // Apply ?progress= on load / address-bar changes (full navigation)
   useEffect(() => {
-    setPlaying(false)
-    setProgress(0)
+    const apply = () => {
+      const p = progressFromUrl()
+      if (p != null) {
+        setPlaying(false)
+        setProgress(p)
+      }
+    }
+    apply()
+    window.addEventListener('popstate', apply)
+    return () => window.removeEventListener('popstate', apply)
+  }, [])
+
+  // Reset playhead when destination changes after initial mount
+  useEffect(() => {
+    if (prevDestination.current == null) {
+      prevDestination.current = destinationId
+      return
+    }
+    if (prevDestination.current !== destinationId) {
+      prevDestination.current = destinationId
+      setPlaying(false)
+      setProgress(0)
+    }
   }, [destinationId])
 
   useEffect(() => {

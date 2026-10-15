@@ -9,12 +9,16 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (usually `http://localhost:5173`).
+Open the URL Vite prints. With the GitHub Pages project `base`, that is usually `http://localhost:5173/rocket-launcher/`.
 
 ```bash
 npm run build
 npm run preview
 ```
+
+### GitHub Pages / `BASE_URL`
+
+This app is deployed as a **project site** (`https://philosopherkk.github.io/rocket-launcher/`). Vite sets `base: '/rocket-launcher/'`, so every `public/` asset must be resolved with `import.meta.env.BASE_URL` (see `src/lib/publicUrl.ts`). Absolute root paths like `/textures/...` 404 on Pages and can abort React mount. Texture loads use a non-throwing loader with procedural fallbacks in `src/lib/textures.ts`.
 
 ## Features
 

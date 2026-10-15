@@ -5,6 +5,7 @@ import { DestinationPanel } from './components/DestinationPanel'
 import { MeasurementHud } from './components/MeasurementHud'
 import { MissionScene, type CameraOrbit } from './components/MissionScene'
 import { PhasePanel } from './components/PhasePanel'
+import { SceneErrorBoundary } from './components/SceneErrorBoundary'
 import { Timeline } from './components/Timeline'
 import { VehiclePanel } from './components/VehiclePanel'
 import { ViewerBar } from './components/ViewerBar'
@@ -174,17 +175,19 @@ export default function App() {
       <main className="layout">
         <div className="stage">
           <div className="canvas-wrap" ref={setStage}>
-            <Suspense fallback={<div className="canvas-fallback">Loading 3D…</div>}>
-              <MissionScene
-                progress={progress}
-                destinationId={destinationId}
-                scaleMode={scaleMode}
-                logDist={logDist}
-                orbit={orbit}
-                userCamera={userCamera}
-                onCameraKm={setCameraKm}
-              />
-            </Suspense>
+            <SceneErrorBoundary>
+              <Suspense fallback={<div className="canvas-fallback">Loading 3D…</div>}>
+                <MissionScene
+                  progress={progress}
+                  destinationId={destinationId}
+                  scaleMode={scaleMode}
+                  logDist={logDist}
+                  orbit={orbit}
+                  userCamera={userCamera}
+                  onCameraKm={setCameraKm}
+                />
+              </Suspense>
+            </SceneErrorBoundary>
             <ViewerBar
               locale={locale}
               playing={playing}

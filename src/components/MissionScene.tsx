@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, Line, Stars, useTexture } from '@react-three/drei'
+import { Html, Line, Stars } from '@react-three/drei'
 import { useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { StarshipModel } from './StarshipModel'
@@ -23,7 +23,13 @@ import {
   SHIP_MODEL_TO_KM,
   showDetailedShip,
 } from '../lib/kmCamera'
-import { makeEarthTexture, makeMoonTexture, makePlanetTexture } from '../lib/textures'
+import {
+  makeCloudTexture,
+  makeEarthTexture,
+  makeMoonTexture,
+  makePlanetTexture,
+} from '../lib/textures'
+import { useSafeTexture, useSafeTextures } from '../hooks/useSafeTexture'
 import { vehiclePose } from '../lib/vehiclePath'
 import { zoomDistanceFactor } from './ViewerBar'
 
@@ -79,11 +85,11 @@ function craftKm(progress: number, destinationId: DestinationId): {
 }
 
 function TrueEarth({ cameraKm }: { cameraKm: number }) {
-  const base = import.meta.env.BASE_URL
-  const [dayMap, cloudMap] = useTexture([
-    `${base}textures/earth_day.jpg`,
-    `${base}textures/earth_clouds.png`,
-  ])
+  const { maps, failed } = useSafeTextures(
+    ['textures/earth_day.jpg', 'textures/earth_clouds.png'],
+    () => [makeEarthTexture(), makeCloudTexture()],
+  )
+  const [dayMap, cloudMap] = maps
   const g = useRef<THREE.Group>(null)
   const cloudsRef = useRef<THREE.Group>(null)
   const far = cameraKm > 40_000
@@ -99,6 +105,11 @@ function TrueEarth({ cameraKm }: { cameraKm: number }) {
   })
   return (
     <group>
+      {failed && (
+        <Html position={[0, EARTH_R_KM * 1.35, 0]} center style={{ pointerEvents: 'none' }}>
+          <div className="texture-fallback-chip">Procedural Earth map (NASA texture unavailable)</div>
+        </Html>
+      )}
       <group ref={g}>
         <mesh>
           <sphereGeometry args={[EARTH_R_KM, 96, 96]} />
@@ -178,7 +189,7 @@ function PadApron({ normal }: { normal: THREE.Vector3 }) {
 }
 
 function TrueMoon({ cameraKm }: { cameraKm: number }) {
-  const map = useTexture(`${import.meta.env.BASE_URL}textures/moon.jpg`)
+  const { map, failed } = useSafeTexture('textures/moon.jpg', () => makeMoonTexture())
   const far = cameraKm > 40_000
   useMemo(() => {
     map.colorSpace = THREE.SRGBColorSpace
@@ -186,6 +197,11 @@ function TrueMoon({ cameraKm }: { cameraKm: number }) {
   }, [map])
   return (
     <group position={[MOON_DIST_KM, 0, 0]}>
+      {failed && (
+        <Html position={[0, MOON_R_KM * 2.2, 0]} center style={{ pointerEvents: 'none' }}>
+          <div className="texture-fallback-chip">Procedural Moon map</div>
+        </Html>
+      )}
       <mesh>
         <sphereGeometry args={[MOON_R_KM, 72, 72]} />
         <meshStandardMaterial

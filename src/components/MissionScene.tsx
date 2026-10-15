@@ -79,7 +79,11 @@ function craftKm(progress: number, destinationId: DestinationId): {
 }
 
 function TrueEarth({ cameraKm }: { cameraKm: number }) {
-  const [dayMap, cloudMap] = useTexture(['/textures/earth_day.jpg', '/textures/earth_clouds.png'])
+  const base = import.meta.env.BASE_URL
+  const [dayMap, cloudMap] = useTexture([
+    `${base}textures/earth_day.jpg`,
+    `${base}textures/earth_clouds.png`,
+  ])
   const g = useRef<THREE.Group>(null)
   const cloudsRef = useRef<THREE.Group>(null)
   const far = cameraKm > 40_000
@@ -174,7 +178,7 @@ function PadApron({ normal }: { normal: THREE.Vector3 }) {
 }
 
 function TrueMoon({ cameraKm }: { cameraKm: number }) {
-  const map = useTexture('/textures/moon.jpg')
+  const map = useTexture(`${import.meta.env.BASE_URL}textures/moon.jpg`)
   const far = cameraKm > 40_000
   useMemo(() => {
     map.colorSpace = THREE.SRGBColorSpace

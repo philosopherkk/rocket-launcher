@@ -85,8 +85,8 @@ function craftKm(progress: number, destinationId: DestinationId): {
 }
 
 function TrueEarth({ cameraKm }: { cameraKm: number }) {
-  const { maps, failed } = useSafeTextures(
-    ['textures/earth_day.jpg', 'textures/earth_clouds.png'],
+  const { maps, phase, showLoadingChip } = useSafeTextures(
+    ['textures/earth_day.jpg', 'textures/earth_clouds.jpg'],
     () => [makeEarthTexture(), makeCloudTexture()],
   )
   const [dayMap, cloudMap] = maps
@@ -103,11 +103,17 @@ function TrueEarth({ cameraKm }: { cameraKm: number }) {
     if (g.current) g.current.rotation.y += dt * 0.018
     if (cloudsRef.current) cloudsRef.current.rotation.y += dt * 0.022
   })
+  const chip =
+    showLoadingChip
+      ? 'Textures loading…'
+      : phase === 'failed'
+        ? 'Procedural Earth map (NASA texture unavailable)'
+        : null
   return (
     <group>
-      {failed && (
+      {chip && (
         <Html position={[0, EARTH_R_KM * 1.35, 0]} center style={{ pointerEvents: 'none' }}>
-          <div className="texture-fallback-chip">Procedural Earth map (NASA texture unavailable)</div>
+          <div className="texture-fallback-chip">{chip}</div>
         </Html>
       )}
       <group ref={g}>
@@ -189,17 +195,25 @@ function PadApron({ normal }: { normal: THREE.Vector3 }) {
 }
 
 function TrueMoon({ cameraKm }: { cameraKm: number }) {
-  const { map, failed } = useSafeTexture('textures/moon.jpg', () => makeMoonTexture())
+  const { map, phase, showLoadingChip } = useSafeTexture('textures/moon.jpg', () =>
+    makeMoonTexture(),
+  )
   const far = cameraKm > 40_000
   useMemo(() => {
     map.colorSpace = THREE.SRGBColorSpace
     map.anisotropy = 8
   }, [map])
+  const chip =
+    showLoadingChip
+      ? 'Textures loading…'
+      : phase === 'failed'
+        ? 'Procedural Moon map'
+        : null
   return (
     <group position={[MOON_DIST_KM, 0, 0]}>
-      {failed && (
+      {chip && (
         <Html position={[0, MOON_R_KM * 2.2, 0]} center style={{ pointerEvents: 'none' }}>
-          <div className="texture-fallback-chip">Procedural Moon map</div>
+          <div className="texture-fallback-chip">{chip}</div>
         </Html>
       )}
       <mesh>

@@ -601,6 +601,27 @@ body {
   letter-spacing: 0.02em;
 }
 
+.texture-status-chip {
+  position: absolute;
+  top: 0.55rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  pointer-events: none;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(12, 18, 32, 0.9);
+  border: 1px solid rgba(61, 214, 198, 0.45);
+  color: #9ad8ff;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.texture-status-chip.failed {
+  border-color: rgba(240, 163, 94, 0.55);
+  color: #f0a35e;
+}
+
 .timeline {
   background: var(--panel);
   border: 1px solid var(--line);

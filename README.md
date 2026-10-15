@@ -18,7 +18,9 @@ npm run preview
 
 ### GitHub Pages / `BASE_URL`
 
-This app is deployed as a **project site** (`https://philosopherkk.github.io/rocket-launcher/`). Vite sets `base: '/rocket-launcher/'`, so every `public/` asset must be resolved with `import.meta.env.BASE_URL` (see `src/lib/publicUrl.ts`). Absolute root paths like `/textures/...` 404 on Pages and can abort React mount. Texture loads use a non-throwing loader with procedural fallbacks in `src/lib/textures.ts`.
+This app is deployed as a **project site** (`https://philosopherkk.github.io/rocket-launcher/`). Vite sets `base: '/rocket-launcher/'`, so every `public/` asset must be resolved with `import.meta.env.BASE_URL` (see `src/lib/publicUrl.ts`). Absolute root paths like `/textures/...` 404 on Pages and can abort React mount.
+
+The 3D canvas paints **procedural** Earth/Moon maps immediately, then upgrades to the small NASA/public JPGs in `public/textures/` (≤512px) in the background with a ~4s timeout. Flaky CDN downloads never block Suspense or blank the scene.
 
 ## Features
 

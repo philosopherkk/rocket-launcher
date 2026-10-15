@@ -6,6 +6,7 @@ import { MeasurementHud } from './components/MeasurementHud'
 import { MissionScene, type CameraOrbit } from './components/MissionScene'
 import { PhasePanel } from './components/PhasePanel'
 import { SceneErrorBoundary } from './components/SceneErrorBoundary'
+import { TextureStatusChip } from './components/TextureStatusChip'
 import { Timeline } from './components/Timeline'
 import { VehiclePanel } from './components/VehiclePanel'
 import { ViewerBar } from './components/ViewerBar'
@@ -176,7 +177,17 @@ export default function App() {
         <div className="stage">
           <div className="canvas-wrap" ref={setStage}>
             <SceneErrorBoundary>
-              <Suspense fallback={<div className="canvas-fallback">Loading 3D…</div>}>
+              {/*
+                Suspense stays for any rare async child; textures never suspend —
+                procedural maps paint immediately, NASA upgrades in background.
+              */}
+              <Suspense
+                fallback={
+                  <div className="canvas-fallback">
+                    Preparing 3D canvas… (procedural maps ready next frame)
+                  </div>
+                }
+              >
                 <MissionScene
                   progress={progress}
                   destinationId={destinationId}
@@ -188,6 +199,7 @@ export default function App() {
                 />
               </Suspense>
             </SceneErrorBoundary>
+            <TextureStatusChip />
             <ViewerBar
               locale={locale}
               playing={playing}

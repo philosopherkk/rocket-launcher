@@ -2,25 +2,38 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Difficulty, Locale } from '../data/phases'
 import { phaseAtProgress, phaseIndexAtProgress } from '../data/phases'
 import { destinationIds, type DestinationId } from '../data/destinations'
+import type { ScaleMode } from '../data/astroConstants'
 
 const STORAGE_KEY = 'moon-mission-prefs'
 
-type Prefs = { locale: Locale; difficulty: Difficulty; destinationId: DestinationId }
+type Prefs = {
+  locale: Locale
+  difficulty: Difficulty
+  destinationId: DestinationId
+  scaleMode: ScaleMode
+}
 
 function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { locale: 'en', difficulty: 'beginner', destinationId: 'moon' }
+    if (!raw) {
+      return { locale: 'en', difficulty: 'beginner', destinationId: 'moon', scaleMode: 'auto' }
+    }
     const parsed = JSON.parse(raw) as Prefs
+    const scaleMode: ScaleMode =
+      parsed.scaleMode === 'planet' || parsed.scaleMode === 'vehicle' || parsed.scaleMode === 'auto'
+        ? parsed.scaleMode
+        : 'auto'
     return {
       locale: parsed.locale === 'zh-Hant' ? 'zh-Hant' : 'en',
       difficulty: ['beginner', 'intermediate', 'advanced'].includes(parsed.difficulty)
         ? parsed.difficulty
         : 'beginner',
       destinationId: destinationIds.includes(parsed.destinationId) ? parsed.destinationId : 'moon',
+      scaleMode,
     }
   } catch {
-    return { locale: 'en', difficulty: 'beginner', destinationId: 'moon' }
+    return { locale: 'en', difficulty: 'beginner', destinationId: 'moon', scaleMode: 'auto' }
   }
 }
 
@@ -41,6 +54,7 @@ export function useMissionState() {
   const [locale, setLocale] = useState<Locale>(prefs.locale)
   const [difficulty, setDifficulty] = useState<Difficulty>(prefs.difficulty)
   const [destinationId, setDestinationId] = useState<DestinationId>(prefs.destinationId)
+  const [scaleMode, setScaleMode] = useState<ScaleMode>(prefs.scaleMode)
   const [progress, setProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
   const rafRef = useRef<number | null>(null)
@@ -48,8 +62,11 @@ export function useMissionState() {
   const prevDestination = useRef<DestinationId | null>(null)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ locale, difficulty, destinationId }))
-  }, [locale, difficulty, destinationId])
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ locale, difficulty, destinationId, scaleMode }),
+    )
+  }, [locale, difficulty, destinationId, scaleMode])
 
   // Apply ?progress= on load / address-bar changes (full navigation)
   useEffect(() => {
@@ -123,6 +140,8 @@ export function useMissionState() {
     setDifficulty,
     destinationId,
     setDestinationId,
+    scaleMode,
+    setScaleMode,
     progress,
     setProgress,
     playing,

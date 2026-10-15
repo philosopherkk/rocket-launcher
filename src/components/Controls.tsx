@@ -1,14 +1,24 @@
 import type { Difficulty, Locale } from '../data/phases'
+import type { ScaleMode } from '../data/astroConstants'
 import { t } from '../data/i18n'
 
 type Props = {
   locale: Locale
   difficulty: Difficulty
+  scaleMode: ScaleMode
   onLocale: (l: Locale) => void
   onDifficulty: (d: Difficulty) => void
+  onScaleMode: (m: ScaleMode) => void
 }
 
-export function Controls({ locale, difficulty, onLocale, onDifficulty }: Props) {
+export function Controls({
+  locale,
+  difficulty,
+  scaleMode,
+  onLocale,
+  onDifficulty,
+  onScaleMode,
+}: Props) {
   return (
     <div className="controls">
       <label className="control">
@@ -32,6 +42,18 @@ export function Controls({ locale, difficulty, onLocale, onDifficulty }: Props) 
           <option value="beginner">{t(locale, 'beginner')}</option>
           <option value="intermediate">{t(locale, 'intermediate')}</option>
           <option value="advanced">{t(locale, 'advanced')}</option>
+        </select>
+      </label>
+      <label className="control">
+        <span>{t(locale, 'scaleMode')}</span>
+        <select
+          value={scaleMode}
+          onChange={(e) => onScaleMode(e.target.value as ScaleMode)}
+          aria-label={t(locale, 'scaleMode')}
+        >
+          <option value="auto">{t(locale, 'scaleAuto')}</option>
+          <option value="planet">{t(locale, 'scalePlanet')}</option>
+          <option value="vehicle">{t(locale, 'scaleVehicle')}</option>
         </select>
       </label>
     </div>

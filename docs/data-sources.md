@@ -52,12 +52,40 @@ SpaceX publicly discusses Moon and Mars roles (including on-orbit refilling). **
 
 Trajectory survey tools such as [NASA Trajectory Browser](https://trajbrowser.arc.nasa.gov/user_guide.php) are cited as the class of tool for higher-fidelity Lambert surveys — the app does not scrape live ephemerides.
 
+## Scale modes (educational honesty)
+
+True 1:1 Starship (~120 m class) vs Earth (~12,742 km diameter) cannot be viewed usefully in one frame. The app exposes two modes (plus **Auto** by phase):
+
+| Mode | What is true-scale | What is not |
+| --- | --- | --- |
+| **Planet scale** | Body radii relative to each other; cislunar distances in Earth radii (R⊕); heliocentric orbital distances in AU | Vehicle is a **marker glyph** only — never a giant rocket on Earth |
+| **Vehicle scale** | Starship / Super Heavy silhouette using public ratios (9 m Ø; ~52 m / ~72 m / ~124 m stack) | Earth is a **local backdrop**, not a full-planet 1:1 globe |
+
+### Mean values used (`src/data/astroConstants.ts`)
+
+| Constant | Value | Class of source |
+| --- | --- | --- |
+| Earth mean radius | 6,371 km | IAU / NASA fact-sheet class |
+| Moon mean radius | 1,737.4 km | Same |
+| Mean Earth–Moon distance | 384,400 km ≈ 60.3 R⊕ | Same |
+| 1 AU | 149,597,870.7 km | IAU |
+| Mars / Venus / Mercury / Jupiter mean radii & a | 3,389.5 / 6,051.8 / 2,439.7 / 69,911 km; 1.524 / 0.723 / 0.387 / 5.203 AU | NASA planetary fact sheets |
+| Teaching LEO altitude | 300 km | Textbook class, not a Starship flight rule |
+| μ⊕ / μ☉ | 398,600 / 132,712,440,018 km³/s² | Standard GM values for vis-viva teaching |
+
+**Heliocentric body exaggeration:** planet spheres in AU view are multiplied by `HELIO_BODY_EXAGGERATION = 1800` so they remain visible; **orbital distances stay true AU**. The HUD discloses this. Cislunar mode does **not** exaggerate Earth–Moon distance.
+
+**Textures:** procedural educational stand-ins (ocean/land albedo, lunar greyscale maria, Mars ochre). Not NASA photogrammetric mosaics; no photogrammetric accuracy claimed.
+
+**Trajectory geometry:** cislunar patched-conic teaching ellipse (LEO perigee → lunar-distance apogee); heliocentric ideal Hohmann ellipse matching `orbital.ts` Δv / TOF. Path measurements (distance, altitude / heliocentric r, characteristic speed, peri/apo or transfer *a* at Advanced) are tied to the scrubber parameter — not a straight-line toy path.
+
 ## Accuracy labels
 
 - **Fact:** Starship vehicle panel numbers with SpaceX/NASA links
 - **Idealized model:** Hohmann Δv / TOF / synodic periods from circular coplanar math
 - **Architecture class (NASA studies):** conjunction vs opposition Mars round-trips
-- **Illustrative:** 3D path scale, scrubber phase durations, simplified vehicle silhouette
+- **Illustrative:** scrubber phase durations, simplified vehicle silhouette, procedural body textures
+- **Scale disclosure:** dual planet / vehicle modes; heliocentric radius exaggeration labeled in HUD
 - **Not invented as Starship missions:** crewed Venus / Mercury / Jupiter round-trips
 
 ## Deliberately unused as “fact”
@@ -65,3 +93,4 @@ Trajectory survey tools such as [NASA Trajectory Browser](https://trajbrowser.ar
 - Secondary blog spec sheets that conflict with SpaceX’s vehicle page
 - Exact future launch open/close calendars without an ephemeris product
 - Unpublished Starship Mars/Moon burn tables presented as certified
+- Claiming 1:1 rocket↔Earth in a single useful viewport

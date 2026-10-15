@@ -2,6 +2,7 @@ import { Suspense, useEffect } from 'react'
 import { AtmospherePanel } from './components/AtmospherePanel'
 import { Controls } from './components/Controls'
 import { DestinationPanel } from './components/DestinationPanel'
+import { MeasurementHud } from './components/MeasurementHud'
 import { MissionScene } from './components/MissionScene'
 import { PhasePanel } from './components/PhasePanel'
 import { Timeline } from './components/Timeline'
@@ -17,6 +18,8 @@ export default function App() {
     setDifficulty,
     destinationId,
     setDestinationId,
+    scaleMode,
+    setScaleMode,
     progress,
     setProgress,
     playing,
@@ -39,8 +42,10 @@ export default function App() {
         <Controls
           locale={locale}
           difficulty={difficulty}
+          scaleMode={scaleMode}
           onLocale={setLocale}
           onDifficulty={setDifficulty}
+          onScaleMode={setScaleMode}
         />
       </header>
 
@@ -57,8 +62,19 @@ export default function App() {
         <div className="stage">
           <div className="canvas-wrap">
             <Suspense fallback={<div className="canvas-fallback">Loading 3D…</div>}>
-              <MissionScene progress={progress} destinationId={destinationId} />
+              <MissionScene
+                progress={progress}
+                destinationId={destinationId}
+                scaleMode={scaleMode}
+              />
             </Suspense>
+            <MeasurementHud
+              locale={locale}
+              difficulty={difficulty}
+              destinationId={destinationId}
+              progress={progress}
+              scaleMode={scaleMode}
+            />
           </div>
           <Timeline
             locale={locale}

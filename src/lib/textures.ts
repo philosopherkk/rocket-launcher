@@ -18,51 +18,105 @@ function toTexture(c: HTMLCanvasElement, anisotropy = 4): THREE.CanvasTexture {
   return tex
 }
 
-/** Lightweight procedural Earth map (not NASA imagery — educational stand-in). */
+/**
+ * Procedural Earth stand-in (not NASA photogrammetry).
+ * Ocean albedo, land contrast, ice caps — educational atmosphere cue via separate cloud map.
+ */
 export function makeEarthTexture(size = 512): THREE.CanvasTexture {
   const { c, ctx } = canvas(size)
   const g = ctx.createLinearGradient(0, 0, 0, size)
-  g.addColorStop(0, '#1a3d6e')
-  g.addColorStop(0.5, '#1f6a9e')
-  g.addColorStop(1, '#1a3d6e')
+  g.addColorStop(0, '#0d2a52')
+  g.addColorStop(0.22, '#145a8a')
+  g.addColorStop(0.5, '#1a6fa0')
+  g.addColorStop(0.78, '#145a8a')
+  g.addColorStop(1, '#0d2a52')
   ctx.fillStyle = g
   ctx.fillRect(0, 0, size, size)
 
-  // Continent blobs
-  const land = ['#2f7a45', '#3d8f52', '#276338', '#4a9a55']
-  for (let i = 0; i < 55; i++) {
+  // Deep basins
+  ctx.globalAlpha = 0.25
+  for (let i = 0; i < 18; i++) {
+    ctx.fillStyle = '#0a3d6a'
+    ctx.beginPath()
+    ctx.ellipse(
+      ((i * 131) % size),
+      ((i * 97) % size),
+      40 + (i % 8) * 12,
+      28 + (i % 6) * 8,
+      i * 0.3,
+      0,
+      Math.PI * 2,
+    )
+    ctx.fill()
+  }
+  ctx.globalAlpha = 1
+
+  // Continents — higher albedo contrast vs ocean
+  const land = ['#2a6b38', '#3a8648', '#245830', '#4a9455', '#6b8f4a']
+  const blobs = [
+    [0.18, 0.42, 90, 55],
+    [0.32, 0.38, 70, 100],
+    [0.55, 0.45, 110, 48],
+    [0.72, 0.4, 80, 70],
+    [0.85, 0.52, 55, 40],
+    [0.42, 0.62, 45, 35],
+    [0.22, 0.72, 50, 28],
+  ] as const
+  for (let i = 0; i < blobs.length; i++) {
+    const [fx, fy, rx, ry] = blobs[i]
+    ctx.fillStyle = land[i % land.length]
+    ctx.beginPath()
+    ctx.ellipse(fx * size, fy * size, rx * (size / 512), ry * (size / 512), i * 0.2, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  for (let i = 0; i < 40; i++) {
     ctx.fillStyle = land[i % land.length]
     const x = (Math.sin(i * 12.9898) * 0.5 + 0.5) * size
     const y = (Math.cos(i * 78.233) * 0.5 + 0.5) * size
-    const rx = 18 + (i % 7) * 10
-    const ry = 12 + (i % 5) * 8
     ctx.beginPath()
-    ctx.ellipse(x, y, rx, ry, i * 0.4, 0, Math.PI * 2)
+    ctx.ellipse(x, y, 14 + (i % 7) * 8, 10 + (i % 5) * 6, i * 0.4, 0, Math.PI * 2)
     ctx.fill()
   }
 
-  // Cloud wisps
-  ctx.globalAlpha = 0.22
-  ctx.fillStyle = '#ffffff'
-  for (let i = 0; i < 40; i++) {
-    const x = ((i * 97) % size)
-    const y = ((i * 53) % size)
+  // Deserts / high albedo patches
+  ctx.globalAlpha = 0.35
+  ctx.fillStyle = '#c2a66a'
+  for (let i = 0; i < 8; i++) {
     ctx.beginPath()
-    ctx.ellipse(x, y, 40 + (i % 10) * 4, 8 + (i % 4) * 3, i, 0, Math.PI * 2)
+    ctx.ellipse(((i * 67 + 40) % size), ((i * 41 + 120) % size), 18, 10, i, 0, Math.PI * 2)
     ctx.fill()
   }
   ctx.globalAlpha = 1
 
   // Ice caps
   const polar = ctx.createLinearGradient(0, 0, 0, size)
-  polar.addColorStop(0, 'rgba(230,240,255,0.85)')
-  polar.addColorStop(0.12, 'rgba(230,240,255,0)')
-  polar.addColorStop(0.88, 'rgba(230,240,255,0)')
-  polar.addColorStop(1, 'rgba(230,240,255,0.85)')
+  polar.addColorStop(0, 'rgba(235,245,255,0.92)')
+  polar.addColorStop(0.1, 'rgba(235,245,255,0)')
+  polar.addColorStop(0.9, 'rgba(235,245,255,0)')
+  polar.addColorStop(1, 'rgba(235,245,255,0.92)')
   ctx.fillStyle = polar
   ctx.fillRect(0, 0, size, size)
 
   return toTexture(c)
+}
+
+/** Separate translucent cloud layer (not baked into land map). */
+export function makeCloudTexture(size = 512): THREE.CanvasTexture {
+  const { c, ctx } = canvas(size)
+  ctx.clearRect(0, 0, size, size)
+  ctx.fillStyle = '#ffffff'
+  for (let i = 0; i < 70; i++) {
+    const x = (i * 97 + 13) % size
+    const y = (i * 53 + 29) % size
+    ctx.globalAlpha = 0.12 + (i % 5) * 0.04
+    ctx.beginPath()
+    ctx.ellipse(x, y, 36 + (i % 12) * 5, 7 + (i % 5) * 3, i * 0.7, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.globalAlpha = 1
+  const tex = toTexture(c)
+  tex.premultiplyAlpha = true
+  return tex
 }
 
 export function makeEarthNormalHint(size = 256): THREE.CanvasTexture {
@@ -80,27 +134,58 @@ export function makeEarthNormalHint(size = 256): THREE.CanvasTexture {
   return tex
 }
 
+/** Greyscale lunar surface with darker maria basins. */
 export function makeMoonTexture(size = 512): THREE.CanvasTexture {
   const { c, ctx } = canvas(size)
-  ctx.fillStyle = '#b7b2a8'
+  const base = ctx.createLinearGradient(0, 0, size, size)
+  base.addColorStop(0, '#c4bfb6')
+  base.addColorStop(0.5, '#b0aaa0')
+  base.addColorStop(1, '#a8a298')
+  ctx.fillStyle = base
   ctx.fillRect(0, 0, size, size)
-  for (let i = 0; i < 900; i++) {
-    const shade = 140 + ((i * 17) % 70)
-    ctx.fillStyle = `rgb(${shade},${shade - 4},${shade - 10})`
-    const x = (i * 47) % size
-    const y = (i * 91) % size
-    const r = 1 + (i % 9)
+
+  // Highlands noise
+  for (let i = 0; i < 1200; i++) {
+    const shade = 150 + ((i * 17) % 60)
+    ctx.fillStyle = `rgb(${shade},${shade - 2},${shade - 8})`
+    ctx.globalAlpha = 0.35
+    ctx.beginPath()
+    ctx.arc((i * 47) % size, (i * 91) % size, 1 + (i % 8), 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.globalAlpha = 1
+
+  // Maria — darker greyscale basins (Oceanus Procellarum–class cues)
+  const maria = [
+    [0.28, 0.4, 70, 48, 0.42],
+    [0.55, 0.38, 55, 40, 0.38],
+    [0.42, 0.55, 45, 32, 0.35],
+    [0.68, 0.52, 38, 28, 0.32],
+    [0.35, 0.62, 30, 22, 0.3],
+  ] as const
+  for (const [fx, fy, rx, ry, a] of maria) {
+    ctx.fillStyle = `rgba(72,70,66,${a})`
+    ctx.beginPath()
+    ctx.ellipse(fx * size, fy * size, rx * (size / 512), ry * (size / 512), 0.2, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  // Craters
+  for (let i = 0; i < 80; i++) {
+    const x = (i * 73) % size
+    const y = (i * 101) % size
+    const r = 3 + (i % 12)
+    ctx.strokeStyle = 'rgba(60,58,54,0.35)'
+    ctx.lineWidth = 1
     ctx.beginPath()
     ctx.arc(x, y, r, 0, Math.PI * 2)
-    ctx.fill()
-  }
-  // Larger maria
-  for (let i = 0; i < 12; i++) {
-    ctx.fillStyle = 'rgba(90,88,82,0.35)'
+    ctx.stroke()
+    ctx.fillStyle = 'rgba(200,195,185,0.12)'
     ctx.beginPath()
-    ctx.ellipse((i * 73) % size, (i * 101) % size, 30 + i * 3, 22 + i * 2, i, 0, Math.PI * 2)
+    ctx.arc(x - r * 0.2, y - r * 0.2, r * 0.55, 0, Math.PI * 2)
     ctx.fill()
   }
+
   return toTexture(c)
 }
 
@@ -109,18 +194,43 @@ export function makePlanetTexture(
   accent: string,
   size = 384,
   bands = false,
+  variant?: 'mars',
 ): THREE.CanvasTexture {
   const { c, ctx } = canvas(size)
   if (bands) {
     for (let y = 0; y < size; y++) {
       const t = y / size
       const wobble = Math.sin(t * 40 + Math.sin(t * 8) * 2) * 0.08
-      ctx.fillStyle = t + wobble > 0.5 ? base : accent
-      // blend
       const mix = 0.5 + 0.5 * Math.sin(t * Math.PI * 14 + wobble * 8)
       ctx.fillStyle = mixColor(base, accent, mix)
       ctx.fillRect(0, y, size, 1)
     }
+  } else if (variant === 'mars') {
+    // Ochre / rust with darker albedo patches
+    const g = ctx.createLinearGradient(0, 0, 0, size)
+    g.addColorStop(0, '#a85a32')
+    g.addColorStop(0.35, '#c46a3a')
+    g.addColorStop(0.65, '#b85a30')
+    g.addColorStop(1, '#8a3d22')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, size, size)
+    for (let i = 0; i < 90; i++) {
+      ctx.fillStyle = i % 3 === 0 ? '#6e2e18' : '#d4844a'
+      ctx.globalAlpha = 0.12 + (i % 5) * 0.04
+      ctx.beginPath()
+      ctx.ellipse((i * 59) % size, (i * 83) % size, 12 + (i % 22), 7 + (i % 14), i, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    // Polar ice hint
+    ctx.globalAlpha = 0.55
+    const polar = ctx.createLinearGradient(0, 0, 0, size)
+    polar.addColorStop(0, 'rgba(230,220,210,0.7)')
+    polar.addColorStop(0.08, 'rgba(230,220,210,0)')
+    polar.addColorStop(0.92, 'rgba(230,220,210,0)')
+    polar.addColorStop(1, 'rgba(230,220,210,0.65)')
+    ctx.fillStyle = polar
+    ctx.fillRect(0, 0, size, size)
+    ctx.globalAlpha = 1
   } else {
     ctx.fillStyle = base
     ctx.fillRect(0, 0, size, size)
@@ -177,16 +287,26 @@ export function makeTileTexture(size = 256): THREE.CanvasTexture {
 export function makeSteelTexture(size = 256): THREE.CanvasTexture {
   const { c, ctx } = canvas(size)
   const g = ctx.createLinearGradient(0, 0, size, size)
-  g.addColorStop(0, '#d5dce3')
-  g.addColorStop(0.5, '#b7c0c9')
-  g.addColorStop(1, '#c9d2db')
+  g.addColorStop(0, '#e2e8ef')
+  g.addColorStop(0.35, '#c5ced8')
+  g.addColorStop(0.7, '#b0bac4')
+  g.addColorStop(1, '#d0d8e0')
   ctx.fillStyle = g
   ctx.fillRect(0, 0, size, size)
-  for (let i = 0; i < 200; i++) {
-    ctx.strokeStyle = `rgba(255,255,255,${0.02 + (i % 3) * 0.01})`
+  for (let i = 0; i < 220; i++) {
+    ctx.strokeStyle = `rgba(255,255,255,${0.02 + (i % 3) * 0.012})`
     ctx.beginPath()
     ctx.moveTo(0, (i * 17) % size)
     ctx.lineTo(size, (i * 17 + 40) % size)
+    ctx.stroke()
+  }
+  // Circ weld rings cue
+  for (let i = 0; i < 8; i++) {
+    ctx.strokeStyle = 'rgba(80,90,100,0.08)'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, (i / 8) * size)
+    ctx.lineTo(size, (i / 8) * size)
     ctx.stroke()
   }
   return toTexture(c, 2)

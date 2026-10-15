@@ -5,6 +5,7 @@ import type { DestinationId } from '../data/destinations'
 import { getDestination } from '../data/destinations'
 import { earthPos, targetPos } from '../lib/vehiclePath'
 import {
+  makeCloudTexture,
   makeEarthTexture,
   makeMoonTexture,
   makePlanetTexture,
@@ -12,8 +13,8 @@ import {
 
 export function EarthGlobe() {
   const pos = earthPos()
-  const map = useMemo(() => makeEarthTexture(512), [])
-  const clouds = useMemo(() => makeEarthTexture(256), [])
+  const map = useMemo(() => makeEarthTexture(640), [])
+  const clouds = useMemo(() => makeCloudTexture(384), [])
   const group = useRef<THREE.Group>(null)
 
   useFrame((_, dt) => {
@@ -25,14 +26,14 @@ export function EarthGlobe() {
       <group ref={group}>
         <mesh>
           <sphereGeometry args={[2, 64, 64]} />
-          <meshStandardMaterial map={map} roughness={0.85} metalness={0.05} />
+          <meshStandardMaterial map={map} roughness={0.8} metalness={0.06} />
         </mesh>
         <mesh>
-          <sphereGeometry args={[2.03, 48, 48]} />
+          <sphereGeometry args={[2.035, 48, 48]} />
           <meshStandardMaterial
             map={clouds}
             transparent
-            opacity={0.18}
+            opacity={0.26}
             depthWrite={false}
             roughness={1}
           />
@@ -77,7 +78,7 @@ export function TargetPlanet({ destinationId }: { destinationId: DestinationId }
       case 'moon':
         return makeMoonTexture(512)
       case 'mars':
-        return makePlanetTexture('#c46a3a', '#8a3d22', 384, false)
+        return makePlanetTexture('#c46a3a', '#8a3d22', 512, false, 'mars')
       case 'venus':
         return makePlanetTexture('#e8c97a', '#d4a84a', 384, true)
       case 'mercury':

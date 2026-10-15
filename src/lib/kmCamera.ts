@@ -38,27 +38,26 @@ export function kmToLogDist(km: number): number {
 }
 
 /**
- * Suggested auto stand-off (km) for mission progress when user camera is inactive.
- * Coast phases stay craft-centered so the transfer remains readable; only late
- * cislunar overview pulls far enough for both Earth and Moon.
+ * Segment-aware stand-off so the craft stays visible through the whole transit.
+ * Coast phases grow with geocentric r but stay craft-centered.
  */
 export function autoDistanceKm(progress: number): number {
   const p = Math.min(1, Math.max(0, progress))
-  if (p < 0.08) return 0.85 // pad
-  if (p < 0.2) return 5 + ((p - 0.08) / 0.12) * 180 // ascent
-  if (p < 0.32) return 500 + ((p - 0.2) / 0.12) * 2_500 // LEO — craft + Earth limb
-  if (p < 0.55) {
-    // TLI / coast — track craft; stand-off grows with transfer distance
-    const u = (p - 0.32) / 0.23
-    return 12_000 + u * 140_000
+  if (p < 0.08) return 0.9 // pad
+  if (p < 0.2) return 8 + ((p - 0.08) / 0.12) * 220 // ascent
+  if (p < 0.32) return 400 + ((p - 0.2) / 0.12) * 2_200 // LEO
+  if (p < 0.36) return 2_500 // TLI — see burn + Earth limb
+  if (p < 0.62) {
+    // Outbound coast — frame craft; stand-off tracks transfer radius
+    const u = (p - 0.36) / 0.26
+    return 8_000 + u * 220_000
   }
-  if (p < 0.62) return 260_000 + ((p - 0.55) / 0.07) * 100_000 // widen toward Moon
-  if (p < 0.72) return 14_000 // lunar vicinity
+  if (p < 0.72) return 12_000 // lunar vicinity
   if (p < 0.86) {
     const u = (p - 0.72) / 0.14
-    return 20_000 + u * 300_000 // return coast — craft-led pullback
+    return 15_000 + (1 - u) * 200_000 // return — pull in toward Earth
   }
-  return 5 + ((p - 0.86) / 0.14) * 70 // reentry
+  return 8 + ((p - 0.86) / 0.14) * 80 // entry
 }
 
 export function formatCameraDistance(km: number, locale: 'en' | 'zh-Hant'): string {

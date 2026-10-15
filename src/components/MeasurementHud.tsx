@@ -86,6 +86,12 @@ export function MeasurementHud({
         </>
       )}
 
+      {difficulty === 'beginner' && (
+        <p className="measure-caption">
+          {locale === 'en' ? sample.beginnerCaptionEn : sample.beginnerCaptionZh}
+        </p>
+      )}
+
       <dl className="measure-grid">
         {cameraKm != null && (
           <div>
@@ -94,8 +100,18 @@ export function MeasurementHud({
           </div>
         )}
         <div>
+          <dt>{t(locale, 'measTime')}</dt>
+          <dd>{locale === 'en' ? sample.timeLabelEn : sample.timeLabelZh}</dd>
+        </div>
+        <div>
           <dt>{t(locale, 'measSegment')}</dt>
-          <dd>{sample.label}</dd>
+          <dd>
+            <span className={`path-kind-inline ${sample.kind}`}>
+              {sample.kind === 'powered' ? t(locale, 'pathPowered') : t(locale, 'pathCoast')}
+            </span>
+            {' · '}
+            {sample.label}
+          </dd>
         </div>
         {sample.altitudeKm != null && (
           <div>
@@ -134,14 +150,16 @@ export function MeasurementHud({
               <dd>{sample.transferA_AU.toFixed(3)} AU</dd>
             </div>
           )}
-        {difficulty === 'advanced' && sample.periapsisKm != null && sample.apoapsisKm != null && (
-          <div>
-            <dt>{t(locale, 'measPeriApo')}</dt>
-            <dd>
-              {formatKm(sample.periapsisKm, locale)} / {formatKm(sample.apoapsisKm, locale)}
-            </dd>
-          </div>
-        )}
+        {(difficulty === 'intermediate' || difficulty === 'advanced') &&
+          sample.periapsisKm != null &&
+          sample.apoapsisKm != null && (
+            <div>
+              <dt>{t(locale, 'measPeriApo')}</dt>
+              <dd>
+                {formatKm(sample.periapsisKm, locale)} / {formatKm(sample.apoapsisKm, locale)}
+              </dd>
+            </div>
+          )}
         {cislunar && difficulty === 'advanced' && (
           <div>
             <dt>Earth–Moon</dt>

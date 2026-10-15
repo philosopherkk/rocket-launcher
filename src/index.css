@@ -547,11 +547,58 @@ body {
   font-weight: 500;
 }
 
+.measure-caption {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 560;
+  line-height: 1.35;
+}
+
 .measure-note {
   margin: 0.1rem 0 0;
   color: var(--muted);
   font-size: 0.7rem;
   line-height: 1.35;
+}
+
+.path-kind-inline {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.path-kind-inline.powered {
+  color: #f0a35e;
+}
+
+.path-kind-inline.coast {
+  color: #7ec8e8;
+}
+
+.path-kind-chip {
+  white-space: nowrap;
+  padding: 0.22rem 0.5rem;
+  border-radius: 5px;
+  background: rgba(6, 10, 20, 0.78);
+  border: 1px solid rgba(154, 216, 255, 0.28);
+  color: #e8eef8;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.path-kind-chip.powered {
+  border-color: rgba(240, 163, 94, 0.55);
+  color: #f0a35e;
+}
+
+.path-kind-chip.coast {
+  border-color: rgba(90, 154, 170, 0.55);
+  color: #9ad8ff;
 }
 
 .body-label,

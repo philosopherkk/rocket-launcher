@@ -4,15 +4,25 @@ import { useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { StarshipModel } from './StarshipModel'
 import type { DestinationId } from '../data/destinations'
-import { HELIO_BODY_EXAGGERATION, type ScaleMode } from '../data/astroConstants'
+import { HELIO_A_AU, HELIO_BODY_EXAGGERATION, type ScaleMode } from '../data/astroConstants'
 import {
   bodyRadiusScene,
+  HELIO_PLANETS,
+  helioMissionPath,
   isCislunar,
+  planetOrbitRing,
   samplePath,
   targetHelioAu,
   transferCurvePoints,
 } from '../lib/transferGeometry'
-import { craftKmAt, leoPathKm, transferPathKm } from '../lib/craftKm'
+import {
+  craftKmAt,
+  leoPathKm,
+  missionPathKm,
+  returnPathKm,
+  splitPathByKind,
+  transferPathKm,
+} from '../lib/craftKm'
 import {
   autoDistanceKm,
   EARTH_R_KM,
@@ -31,7 +41,6 @@ import {
 } from '../lib/textures'
 import { useSafeTexture, useSafeTextures } from '../hooks/useSafeTexture'
 import { vehiclePose } from '../lib/vehiclePath'
-import { zoomDistanceFactor } from './ViewerBar'
 
 export type CameraOrbit = { yaw: number; pitch: number }
 
@@ -522,16 +531,19 @@ function TrueScaleCislunarScene({
   userCamera: boolean
   onCameraKm?: (km: number) => void
 }) {
-  const pathPts = useMemo(() => transferPathKm(160), [])
+  const transferPts = useMemo(() => transferPathKm(180), [])
+  const returnPts = useMemo(() => returnPathKm(120), [])
   const leoPts = useMemo(() => leoPathKm(96), [])
+  const mission = useMemo(() => missionPathKm(320), [])
+  const { powered, coast } = useMemo(
+    () => splitPathByKind(mission.points, mission.kinds),
+    [mission],
+  )
   const camKm = userCamera ? logDistToKm(logDist) : autoDistanceKm(progress)
-  const showPaths = camKm > 80 && camKm < 900_000
-  // Highlight flown portion of the teaching TLI ellipse (progress 0.32→0.62 maps to path)
-  const flownPts = useMemo(() => {
-    const u = Math.min(1, Math.max(0, (progress - 0.32) / 0.3))
-    const n = Math.max(2, Math.floor(u * (pathPts.length - 1)) + 1)
-    return pathPts.slice(0, n)
-  }, [pathPts, progress])
+  const showPaths = camKm > 60 && camKm < 900_000
+  const flownCount = Math.max(2, Math.floor(progress * (mission.points.length - 1)) + 1)
+  const flownPts = useMemo(() => mission.points.slice(0, flownCount), [mission.points, flownCount])
+  const seg = craftKmAt(progress)
 
   return (
     <>
@@ -545,12 +557,41 @@ function TrueScaleCislunarScene({
       )}
       {showPaths && (
         <>
-          <Line points={leoPts} color="#7dffb3" transparent opacity={0.35} lineWidth={1} />
-          <Line points={pathPts} color="#5a7a9a" transparent opacity={0.4} lineWidth={1} />
+          <Line points={leoPts} color="#7dffb3" transparent opacity={0.4} lineWidth={1} />
+          <Line points={transferPts} color="#5a7a9a" transparent opacity={0.45} lineWidth={1} />
+          <Line points={returnPts} color="#6a5a8a" transparent opacity={0.35} lineWidth={1} />
+          {coast.map((pts, i) =>
+            pts.length >= 2 ? (
+              <Line key={`c-${i}`} points={pts} color="#5a8aaa" transparent opacity={0.25} lineWidth={1} />
+            ) : null,
+          )}
+          {powered.map((pts, i) =>
+            pts.length >= 2 ? (
+              <Line key={`p-${i}`} points={pts} color="#f0a35e" transparent opacity={0.55} lineWidth={2} />
+            ) : null,
+          )}
           {flownPts.length >= 2 && (
-            <Line points={flownPts} color="#9ad8ff" transparent opacity={0.95} lineWidth={2} />
+            <Line points={flownPts} color="#9ad8ff" transparent opacity={0.95} lineWidth={2.5} />
+          )}
+          {camKm > 20_000 && (
+            <Html
+              position={transferPts[Math.floor(transferPts.length / 2)]}
+              distanceFactor={90_000}
+              style={{ pointerEvents: 'none' }}
+            >
+              <div className="path-label">
+                Transfer ellipse · Earth at focus · peri≈LEO · apo≈Moon
+              </div>
+            </Html>
           )}
         </>
+      )}
+      {camKm > 5_000 && (
+        <Html position={seg.position.clone().add(new THREE.Vector3(0, camKm * 0.04, 0))} distanceFactor={Math.max(800, camKm * 0.35)} style={{ pointerEvents: 'none' }}>
+          <div className={`path-kind-chip ${seg.kind}`}>
+            {seg.kind === 'powered' ? 'powered' : 'coast'} · {seg.segment}
+          </div>
+        </Html>
       )}
       <CraftAtTrueScale
         progress={progress}
@@ -604,6 +645,22 @@ function ScaledBody({
   )
 }
 
+/** Segment-aware AU stand-off so the craft stays visible from departure through arrival. */
+function autoHelioAu(progress: number, a2: number): number {
+  const p = Math.min(1, Math.max(0, progress))
+  // Pull back enough to show the scale ladder of other planets (true AU rings)
+  const span = Math.max(a2, 1.5) * 1.55
+  if (p < 0.08) return Math.max(0.55, span * 0.42)
+  if (p < 0.22) return Math.max(0.5, span * 0.48)
+  if (p < 0.72) {
+    const u = (p - 0.22) / 0.5
+    // Mid-coast: whole transfer + neighboring planet rings in frame
+    return Math.max(0.85, span * (0.55 + u * 0.28))
+  }
+  if (p < 0.82) return Math.max(0.6, span * 0.52)
+  return Math.max(0.7, span * 0.58)
+}
+
 function HelioCamera({
   progress,
   destinationId,
@@ -621,31 +678,55 @@ function HelioCamera({
 }) {
   const { camera } = useThree()
   const look = useRef(new THREE.Vector3())
+  const booted = useRef(false)
   // Map logDist (−1.3…6) into AU stand-off ~0.02…8
   const auDist = useMemo(() => {
-    const t = (logDist - (-1.3)) / (6 - -1.3)
+    const t = (logDist - -1.3) / (6 - -1.3)
     return 0.02 * Math.pow(8 / 0.02, Math.min(1, Math.max(0, t)))
   }, [logDist])
 
   useFrame((_, dt) => {
     const s = samplePath(progress, destinationId)
     const a2 = targetHelioAu(destinationId)
-    const auto = Math.max(0.15, a2 * 0.9)
-    const dist = userCamera ? auDist : auto * zoomDistanceFactor((logDist + 1.3) / 2)
+    const dist = userCamera ? auDist : autoHelioAu(progress, a2)
     onCameraKm?.(dist * 149_597_870.7)
+
+    // Craft-centered; slight bias to transfer midpoint during coast so scale context stays in frame
     const focus = s.position.clone()
+    if (progress >= 0.22 && progress < 0.72) {
+      const mid = new THREE.Vector3(((1 + a2) / 2) * (a2 > 1 ? 1 : -1), Math.max(a2, 1) * 0.35, 0)
+      focus.lerp(mid, 0.22)
+    }
+
     const offset = new THREE.Vector3(
       Math.cos(orbit.pitch) * Math.sin(orbit.yaw) * dist,
       Math.sin(orbit.pitch) * dist,
       Math.cos(orbit.pitch) * Math.cos(orbit.yaw) * dist,
     )
     const desired = focus.clone().add(offset)
-    const k = 1 - Math.exp(-dt * 5)
-    camera.position.lerp(desired, k)
-    look.current.lerp(focus, k)
+    const err = camera.position.distanceTo(desired)
+    const snap = !booted.current || err > dist * 2.5
+    if (snap) {
+      camera.position.copy(desired)
+      look.current.copy(focus)
+      booted.current = true
+    } else {
+      const k = 1 - Math.exp(-dt * 4.5)
+      camera.position.lerp(desired, k)
+      look.current.lerp(focus, k)
+    }
     _lookMat.lookAt(camera.position, look.current, _up)
     _lookQ.setFromRotationMatrix(_lookMat)
-    camera.quaternion.slerp(_lookQ, k)
+    if (snap) camera.quaternion.copy(_lookQ)
+    else camera.quaternion.slerp(_lookQ, 1 - Math.exp(-dt * 6))
+
+    const persp = camera as THREE.PerspectiveCamera
+    if (persp.isPerspectiveCamera) {
+      persp.fov = dist > Math.max(a2, 1) * 0.7 ? 48 : 42
+      persp.near = Math.max(0.001, dist * 0.002)
+      persp.far = Math.max(80, dist * 40 + a2 * 8)
+      persp.updateProjectionMatrix()
+    }
   })
   return null
 }
@@ -665,16 +746,25 @@ function HelioScene({
   userCamera: boolean
   onCameraKm?: (km: number) => void
 }) {
-  const pathPts = useMemo(() => transferCurvePoints(destinationId, 100), [destinationId])
+  const pathPts = useMemo(() => transferCurvePoints(destinationId, 140), [destinationId])
+  const mission = useMemo(() => helioMissionPath(destinationId, 220), [destinationId])
+  const { powered, coast } = useMemo(
+    () => splitPathByKind(mission.points, mission.kinds),
+    [mission],
+  )
   const a2 = targetHelioAu(destinationId)
   const marker = useRef<THREE.Group>(null)
-  const destBody =
-    destinationId === 'venus' ||
-    destinationId === 'mercury' ||
-    destinationId === 'jupiter' ||
-    destinationId === 'mars'
-      ? destinationId
-      : 'mars'
+  const sample = samplePath(progress, destinationId)
+  const flownCount = Math.max(2, Math.floor(progress * (mission.points.length - 1)) + 1)
+  const flownPts = useMemo(() => mission.points.slice(0, flownCount), [mission.points, flownCount])
+
+  const planetLabels: Record<string, string> = {
+    mercury: 'Mercury',
+    venus: 'Venus',
+    earth: 'Earth',
+    mars: 'Mars',
+    jupiter: 'Jupiter',
+  }
 
   useFrame((_, dt) => {
     if (!marker.current) return
@@ -686,21 +776,71 @@ function HelioScene({
   return (
     <>
       <Stars radius={40} depth={50} count={5000} factor={2.5} saturation={0} fade speed={0.15} />
+      {/* Sun */}
       <mesh>
         <sphereGeometry args={[0.05, 24, 24]} />
         <meshBasicMaterial color="#ffe29a" />
       </mesh>
-      <ScaledBody body="earth" position={new THREE.Vector3(1, 0, 0)} label="Earth" />
-      <ScaledBody body={destBody} position={new THREE.Vector3(a2, 0, 0)} label={destinationId} />
-      <Line points={pathPts} color="#9ad8ff" transparent opacity={0.65} />
+      <Html position={[0, 0.12, 0]} distanceFactor={4} style={{ pointerEvents: 'none' }}>
+        <div className="body-label">Sun</div>
+      </Html>
+
+      {/* All planets at true mean heliocentric distance (on +x for scale ladder) + orbit rings */}
+      {HELIO_PLANETS.map((id) => {
+        const a = HELIO_A_AU[id]
+        const ring = planetOrbitRing(a, 64)
+        return (
+          <group key={id}>
+            <Line
+              points={ring}
+              color={id === destinationId ? '#f0a35e' : id === 'earth' ? '#5a8aaa' : '#3a4a62'}
+              transparent
+              opacity={id === destinationId ? 0.55 : id === 'earth' ? 0.4 : 0.28}
+              lineWidth={1}
+            />
+            <ScaledBody
+              body={id}
+              position={new THREE.Vector3(a, 0, 0)}
+              label={`${planetLabels[id]} · ${a} AU`}
+            />
+          </group>
+        )
+      })}
+
+      {/* Hohmann guide + powered/coast + flown */}
+      <Line points={pathPts} color="#5a7a9a" transparent opacity={0.5} lineWidth={1} />
+      {coast.map((pts, i) =>
+        pts.length >= 2 ? (
+          <Line key={`hc-${i}`} points={pts} color="#5a9aaa" transparent opacity={0.35} lineWidth={1} />
+        ) : null,
+      )}
+      {powered.map((pts, i) =>
+        pts.length >= 2 ? (
+          <Line key={`hp-${i}`} points={pts} color="#f0a35e" transparent opacity={0.75} lineWidth={2} />
+        ) : null,
+      )}
+      {flownPts.length >= 2 && (
+        <Line points={flownPts} color="#9ad8ff" transparent opacity={0.95} lineWidth={2.5} />
+      )}
+
       <Html position={pathPts[Math.floor(pathPts.length / 2)]} distanceFactor={6} style={{ pointerEvents: 'none' }}>
         <div className="path-label">
-          Hohmann (AU; bodies ×{HELIO_BODY_EXAGGERATION})
+          Ideal Hohmann · coplanar · distances true AU · bodies ×{HELIO_BODY_EXAGGERATION}
         </div>
       </Html>
-      <group ref={marker} position={samplePath(progress, destinationId).position}>
+      <Html
+        position={sample.position.clone().add(new THREE.Vector3(0, 0.08, 0))}
+        distanceFactor={5}
+        style={{ pointerEvents: 'none' }}
+      >
+        <div className={`path-kind-chip ${sample.kind}`}>
+          {sample.kind} · {sample.label}
+        </div>
+      </Html>
+
+      <group ref={marker} position={sample.position}>
         <mesh>
-          <sphereGeometry args={[0.02, 10, 10]} />
+          <sphereGeometry args={[Math.max(0.015, a2 * 0.008), 10, 10]} />
           <meshBasicMaterial color="#3dd6c6" />
         </mesh>
       </group>

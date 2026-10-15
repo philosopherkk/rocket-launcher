@@ -82,7 +82,19 @@ True 1:1 Starship (~120 m class) vs Earth (~12,742 km diameter) cannot be viewed
 - Mars / other bodies: procedural educational stand-ins
 No photogrammetric accuracy claimed; lighting and limb are educational visualizations.
 
-**Trajectory geometry:** cislunar patched-conic teaching ellipse (LEO perigee → lunar-distance apogee); heliocentric ideal Hohmann ellipse matching `orbital.ts` Δv / TOF. Path measurements (distance, altitude / heliocentric r, characteristic speed, peri/apo or transfer *a* at Advanced) are tied to the scrubber parameter — not a straight-line toy path.
+### Trajectory geometry (idealized teaching model — not flown)
+
+Labeled **idealized** in the HUD. Scrubber and HUD times/distances follow the same path geometry continuously (no straight-line shortcuts).
+
+| Path | Geometry | What is idealized | What is true-scale |
+| --- | --- | --- | --- |
+| **Moon** | Patched-conic: pad → gravity turn → circular LEO → prograde TLI at periapsis → Kepler transfer ellipse (Earth at one focus; peri≈LEO, apo≈mean lunar distance 384,400 km) → lunar vicinity → return arc (southern branch) → entry | No lunar gravity SOI capture dynamics; schematic LOI/TEI; phase scrubber durations illustrative | Distances in true km (1 unit = 1 km); half-period ≈ π√(a³/μ⊕) for coast day labels |
+| **Mars / Venus / Mercury / Jupiter** | Circular coplanar Hohmann: departure burn → coast ν:0→π → arrival burn → optional teaching return leg | No plane change, no ephemeris, no escape/capture/landing Δv beyond two-body Hohmann; planets parked on +x at mean *a* | Orbital distances true AU; body spheres ×`HELIO_BODY_EXAGGERATION` (labeled separately) |
+| **Reference planets on helio views** | Mercury…Jupiter shown at mean heliocentric *a* (AU) with orbit rings | Angular positions are a scale ladder, not a date ephemeris | Distances true AU |
+
+**Playback:** base timeline 120 s at 1×; default **10×** (~12 s full transit, watchable); **100× / 1000×** for fast coast. Segment-aware camera keeps the craft framed from departure through arrival.
+
+Path measurements (mission time, distance, altitude / heliocentric *r*, characteristic speed, peri/apo or transfer *a*) are tied to the scrubber parameter along the teaching ellipse — not a toy straight line.
 
 ## Atmosphere, aero-thermo & entry (teaching)
 

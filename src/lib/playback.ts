@@ -5,8 +5,8 @@ export type PlaybackRate = (typeof PLAYBACK_RATES)[number]
 /** Wall-clock seconds for a full 0→1 scrub at 1×. */
 export const BASE_TIMELINE_SECONDS = 120
 
-/** Default: 100× so a Moon round-trip coast is watchable (~1.2 s full run). */
-export const DEFAULT_PLAYBACK_RATE: PlaybackRate = 100
+/** Default 10×: full scrub ~12 s so the whole transit stays watchable; 100×/1000× for fast coast. */
+export const DEFAULT_PLAYBACK_RATE: PlaybackRate = 10
 
 export function formatPlaybackRate(rate: PlaybackRate, locale: 'en' | 'zh-Hant'): string {
   return locale === 'en' ? `${rate}×` : `${rate}×`

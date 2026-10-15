@@ -60,6 +60,9 @@ const ui = {
     scaleAutoHint: 'auto',
     scaleBarHint: 'Educational scale bar — distances use mean radii / AU',
     measSegment: 'Path segment',
+    measTime: 'Mission time',
+    pathPowered: 'powered',
+    pathCoast: 'coast',
     measAltitude: 'Altitude',
     measHelioR: 'Heliocentric r',
     measSpeed: 'Speed (order)',
@@ -86,7 +89,7 @@ const ui = {
     measCamera: 'Camera stand-off',
     trueKmScale: 'True km scale (1 unit = 1 km)',
     playbackRate: 'Speed',
-    playbackRateHint: 'Playback rate — use 100× for a watchable cislunar coast',
+    playbackRateHint: 'Playback rate — 10× default; 100× / 1000× for fast coast',
   },
   'zh-Hant': {
     brand: 'Starship 目的地實驗室',
@@ -146,6 +149,9 @@ const ui = {
     scaleAutoHint: '自動',
     scaleBarHint: '教育比例尺——距離使用平均半徑／天文單位',
     measSegment: '路徑區段',
+    measTime: '任務時間',
+    pathPowered: '點火',
+    pathCoast: '巡航',
     measAltitude: '高度',
     measHelioR: '日心距離',
     measSpeed: '速度（數量級）',
@@ -172,7 +178,7 @@ const ui = {
     measCamera: '相機距離',
     trueKmScale: '真實公里比例（1 單位 = 1 公里）',
     playbackRate: '速率',
-    playbackRateHint: '播放速率——地月巡航建議 100×',
+    playbackRateHint: '播放速率——預設 10×；巡航可用 100×／1000×',
   },
 } as const
 

@@ -9,6 +9,7 @@ import {
   logDistToKm,
   formatCameraDistance,
 } from '../lib/kmCamera'
+import { formatPlaybackRate, type PlaybackRate } from '../lib/playback'
 
 export { clampLogDist, LOG_DIST_STEP, logDistToKm }
 export const ZOOM_STEP = LOG_DIST_STEP
@@ -21,11 +22,13 @@ export function zoomDistanceFactor(zoomLevel: number): number {
 type Props = {
   locale: Locale
   playing: boolean
+  playbackRate: PlaybackRate
   logDist: number
   userCamera: boolean
   cameraKm: number
   fullscreenTarget: HTMLElement | null
   onTogglePlay: () => void
+  onCyclePlaybackRate: () => void
   onZoomIn: () => void
   onZoomOut: () => void
   onResetView: () => void
@@ -34,11 +37,13 @@ type Props = {
 export function ViewerBar({
   locale,
   playing,
+  playbackRate,
   logDist,
   userCamera,
   cameraKm,
   fullscreenTarget,
   onTogglePlay,
+  onCyclePlaybackRate,
   onZoomIn,
   onZoomOut,
   onResetView,
@@ -94,6 +99,16 @@ export function ViewerBar({
           {playing ? '❚❚' : '▶'}
         </span>
         <span>{playing ? t(locale, 'pause') : t(locale, 'resume')}</span>
+      </button>
+
+      <button
+        type="button"
+        className="viewer-btn viewer-btn-rate"
+        onClick={onCyclePlaybackRate}
+        aria-label={t(locale, 'playbackRate')}
+        title={t(locale, 'playbackRateHint')}
+      >
+        <span>{formatPlaybackRate(playbackRate, locale)}</span>
       </button>
 
       <div className="viewer-group" role="group" aria-label={t(locale, 'zoom')}>

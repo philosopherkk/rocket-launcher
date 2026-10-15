@@ -39,17 +39,25 @@ export function kmToLogDist(km: number): number {
 
 /**
  * Suggested auto stand-off (km) for mission progress when user camera is inactive.
- * Cislunar overview uses ≥~4.5e5 km so Earth+Moon fit a ~50° FOV around the midpoint.
+ * Coast phases stay craft-centered so the transfer remains readable; only late
+ * cislunar overview pulls far enough for both Earth and Moon.
  */
 export function autoDistanceKm(progress: number): number {
   const p = Math.min(1, Math.max(0, progress))
-  if (p < 0.08) return 0.85 // pad — stack readable against curved Earth / sky
-  if (p < 0.2) return 5 + ((p - 0.08) / 0.12) * 160 // ascent
-  if (p < 0.32) return 250 + ((p - 0.2) / 0.12) * 1_100 // LEO
-  if (p < 0.48) return 6_000 + ((p - 0.32) / 0.16) * 200_000 // TLI → cislunar
-  if (p < 0.62) return 420_000 // Earth + Moon in frame (needs ≥~360k at FOV~56°)
-  if (p < 0.72) return 16_000 // lunar vicinity
-  if (p < 0.86) return 400_000 // return coast
+  if (p < 0.08) return 0.85 // pad
+  if (p < 0.2) return 5 + ((p - 0.08) / 0.12) * 180 // ascent
+  if (p < 0.32) return 500 + ((p - 0.2) / 0.12) * 2_500 // LEO — craft + Earth limb
+  if (p < 0.55) {
+    // TLI / coast — track craft; stand-off grows with transfer distance
+    const u = (p - 0.32) / 0.23
+    return 12_000 + u * 140_000
+  }
+  if (p < 0.62) return 260_000 + ((p - 0.55) / 0.07) * 100_000 // widen toward Moon
+  if (p < 0.72) return 14_000 // lunar vicinity
+  if (p < 0.86) {
+    const u = (p - 0.72) / 0.14
+    return 20_000 + u * 300_000 // return coast — craft-led pullback
+  }
   return 5 + ((p - 0.86) / 0.14) * 70 // reentry
 }
 

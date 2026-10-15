@@ -3,6 +3,13 @@ import type { Difficulty, Locale } from '../data/phases'
 import { phaseAtProgress, phaseIndexAtProgress } from '../data/phases'
 import { destinationIds, type DestinationId } from '../data/destinations'
 import type { ScaleMode } from '../data/astroConstants'
+import {
+  BASE_TIMELINE_SECONDS,
+  DEFAULT_PLAYBACK_RATE,
+  PLAYBACK_RATES,
+  type PlaybackRate,
+  nextPlaybackRate,
+} from '../lib/playback'
 
 const STORAGE_KEY = 'moon-mission-prefs'
 
@@ -11,6 +18,7 @@ type Prefs = {
   difficulty: Difficulty
   destinationId: DestinationId
   scaleMode: ScaleMode
+  playbackRate?: PlaybackRate
 }
 
 function loadPrefs(): Prefs {
@@ -24,6 +32,9 @@ function loadPrefs(): Prefs {
       parsed.scaleMode === 'planet' || parsed.scaleMode === 'vehicle' || parsed.scaleMode === 'auto'
         ? parsed.scaleMode
         : 'auto'
+    const playbackRate = PLAYBACK_RATES.includes(parsed.playbackRate as PlaybackRate)
+      ? (parsed.playbackRate as PlaybackRate)
+      : DEFAULT_PLAYBACK_RATE
     return {
       locale: parsed.locale === 'zh-Hant' ? 'zh-Hant' : 'en',
       difficulty: ['beginner', 'intermediate', 'advanced'].includes(parsed.difficulty)
@@ -31,9 +42,16 @@ function loadPrefs(): Prefs {
         : 'beginner',
       destinationId: destinationIds.includes(parsed.destinationId) ? parsed.destinationId : 'moon',
       scaleMode,
+      playbackRate,
     }
   } catch {
-    return { locale: 'en', difficulty: 'beginner', destinationId: 'moon', scaleMode: 'auto' }
+    return {
+      locale: 'en',
+      difficulty: 'beginner',
+      destinationId: 'moon',
+      scaleMode: 'auto',
+      playbackRate: DEFAULT_PLAYBACK_RATE,
+    }
   }
 }
 
@@ -57,16 +75,21 @@ export function useMissionState() {
   const [scaleMode, setScaleMode] = useState<ScaleMode>(prefs.scaleMode)
   const [progress, setProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
+  const [playbackRate, setPlaybackRate] = useState<PlaybackRate>(
+    prefs.playbackRate ?? DEFAULT_PLAYBACK_RATE,
+  )
   const rafRef = useRef<number | null>(null)
   const lastRef = useRef<number | null>(null)
   const prevDestination = useRef<DestinationId | null>(null)
+  const rateRef = useRef(playbackRate)
+  rateRef.current = playbackRate
 
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ locale, difficulty, destinationId, scaleMode }),
+      JSON.stringify({ locale, difficulty, destinationId, scaleMode, playbackRate }),
     )
-  }, [locale, difficulty, destinationId, scaleMode])
+  }, [locale, difficulty, destinationId, scaleMode, playbackRate])
 
   // Apply ?progress= on load / address-bar changes (full navigation)
   useEffect(() => {
@@ -106,8 +129,9 @@ export function useMissionState() {
       if (lastRef.current == null) lastRef.current = now
       const dt = (now - lastRef.current) / 1000
       lastRef.current = now
+      const rate = rateRef.current
       setProgress((p) => {
-        const next = p + dt / 75
+        const next = p + (dt * rate) / BASE_TIMELINE_SECONDS
         if (next >= 1) {
           setPlaying(false)
           return 1
@@ -130,6 +154,10 @@ export function useMissionState() {
     })
   }, [progress])
 
+  const cyclePlaybackRate = useCallback(() => {
+    setPlaybackRate((r) => nextPlaybackRate(r))
+  }, [])
+
   const phase = phaseAtProgress(progress)
   const phaseIndex = phaseIndexAtProgress(progress)
 
@@ -147,6 +175,9 @@ export function useMissionState() {
     playing,
     setPlaying,
     togglePlay,
+    playbackRate,
+    setPlaybackRate,
+    cyclePlaybackRate,
     phase,
     phaseIndex,
   }

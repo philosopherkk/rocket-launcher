@@ -85,6 +85,8 @@ const ui = {
     orbitHint: 'Drag to orbit · scroll to zoom · Reset view for auto framing',
     measCamera: 'Camera stand-off',
     trueKmScale: 'True km scale (1 unit = 1 km)',
+    playbackRate: 'Speed',
+    playbackRateHint: 'Playback rate — use 100× for a watchable cislunar coast',
   },
   'zh-Hant': {
     brand: 'Starship 目的地實驗室',
@@ -169,6 +171,8 @@ const ui = {
     orbitHint: '拖曳環視 · 滾動縮放 · 重設視角恢復自動構圖',
     measCamera: '相機距離',
     trueKmScale: '真實公里比例（1 單位 = 1 公里）',
+    playbackRate: '速率',
+    playbackRateHint: '播放速率——地月巡航建議 100×',
   },
 } as const
 

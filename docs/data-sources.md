@@ -76,7 +76,11 @@ True 1:1 Starship (~120 m class) vs Earth (~12,742 km diameter) cannot be viewed
 
 **Heliocentric body exaggeration:** planet spheres in AU view are multiplied by `HELIO_BODY_EXAGGERATION = 1800` so they remain visible; **orbital distances stay true AU**. The HUD discloses this. Cislunar mode does **not** exaggerate Earth–Moon distance.
 
-**Textures:** procedural educational stand-ins (ocean/land albedo, lunar greyscale maria, Mars ochre). Not NASA photogrammetric mosaics; no photogrammetric accuracy claimed.
+**Textures (Earth / Moon):**
+- Earth day map: NASA Visible Earth Blue Marble Next Generation (public domain) — `public/textures/earth_day.jpg`
+- Clouds / Moon: three.js example planet textures (see `public/textures/ATTRIBUTION.txt`)
+- Mars / other bodies: procedural educational stand-ins
+No photogrammetric accuracy claimed; lighting and limb are educational visualizations.
 
 **Trajectory geometry:** cislunar patched-conic teaching ellipse (LEO perigee → lunar-distance apogee); heliocentric ideal Hohmann ellipse matching `orbital.ts` Δv / TOF. Path measurements (distance, altitude / heliocentric r, characteristic speed, peri/apo or transfer *a* at Advanced) are tied to the scrubber parameter — not a straight-line toy path.
 

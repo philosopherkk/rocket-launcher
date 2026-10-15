@@ -618,6 +618,41 @@ body {
   filter: brightness(1.05);
 }
 
+.rate-group {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.15rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(8, 12, 22, 0.55);
+}
+
+.rate-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.rate-btn:hover {
+  color: var(--ink);
+}
+
+.rate-btn.active {
+  background: rgba(61, 214, 198, 0.22);
+  color: var(--accent);
+}
+
+.viewer-btn-rate {
+  min-width: 3.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
 .scrubber {
   width: 100%;
   accent-color: var(--accent);

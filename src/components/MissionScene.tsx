@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Html, Line, Stars } from '@react-three/drei'
-import { useMemo, useRef } from 'react'
+import { Html, Line, Stars, useTexture } from '@react-three/drei'
+import { useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { StarshipModel } from './StarshipModel'
 import type { DestinationId } from '../data/destinations'
@@ -23,12 +23,7 @@ import {
   SHIP_MODEL_TO_KM,
   showDetailedShip,
 } from '../lib/kmCamera'
-import {
-  makeCloudTexture,
-  makeEarthTexture,
-  makeMoonTexture,
-  makePlanetTexture,
-} from '../lib/textures'
+import { makeEarthTexture, makeMoonTexture, makePlanetTexture } from '../lib/textures'
 import { vehiclePose } from '../lib/vehiclePath'
 import { zoomDistanceFactor } from './ViewerBar'
 
@@ -52,10 +47,10 @@ const _lookQ = new THREE.Quaternion()
 function SunLight() {
   return (
     <>
-      <directionalLight position={[800_000, 420_000, 280_000]} intensity={2.8} color="#fff1dd" />
-      <directionalLight position={[-200_000, 100_000, -400_000]} intensity={0.35} color="#8eb4ff" />
-      <hemisphereLight args={['#a8c4ff', '#1a120c', 0.45]} />
-      <ambientLight intensity={0.18} />
+      <directionalLight position={[900_000, 380_000, 220_000]} intensity={3.4} color="#fff4e5" />
+      <directionalLight position={[-280_000, 80_000, -360_000]} intensity={0.22} color="#6a8ec8" />
+      <hemisphereLight args={['#b7d0ff', '#1a120c', 0.28]} />
+      <ambientLight intensity={0.08} />
     </>
   )
 }
@@ -84,60 +79,75 @@ function craftKm(progress: number, destinationId: DestinationId): {
 }
 
 function TrueEarth({ cameraKm }: { cameraKm: number }) {
-  const map = useMemo(() => makeEarthTexture(768), [])
-  const clouds = useMemo(() => makeCloudTexture(512), [])
+  const [dayMap, cloudMap] = useTexture(['/textures/earth_day.jpg', '/textures/earth_clouds.png'])
   const g = useRef<THREE.Group>(null)
-  const far = cameraKm > 25_000
+  const cloudsRef = useRef<THREE.Group>(null)
+  const far = cameraKm > 40_000
+  useMemo(() => {
+    dayMap.colorSpace = THREE.SRGBColorSpace
+    dayMap.anisotropy = 8
+    cloudMap.colorSpace = THREE.SRGBColorSpace
+    cloudMap.anisotropy = 4
+  }, [dayMap, cloudMap])
   useFrame((_, dt) => {
-    if (g.current) g.current.rotation.y += dt * 0.012
+    if (g.current) g.current.rotation.y += dt * 0.018
+    if (cloudsRef.current) cloudsRef.current.rotation.y += dt * 0.022
   })
   return (
     <group>
       <group ref={g}>
         <mesh>
-          <sphereGeometry args={[EARTH_R_KM, 72, 72]} />
+          <sphereGeometry args={[EARTH_R_KM, 96, 96]} />
           <meshStandardMaterial
-            map={map}
-            roughness={0.78}
-            metalness={0.04}
-            emissive="#1a4060"
-            emissiveIntensity={far ? 0.55 : 0.28}
+            map={dayMap}
+            roughness={0.7}
+            metalness={0.06}
+            emissive="#061018"
+            emissiveIntensity={far ? 0.18 : 0.08}
           />
         </mesh>
-        {!far && (
-          <mesh>
-            <sphereGeometry args={[EARTH_R_KM * 1.012, 48, 48]} />
-            <meshStandardMaterial
-              map={clouds}
-              transparent
-              opacity={0.2}
-              depthWrite={false}
-              roughness={1}
-            />
-          </mesh>
-        )}
       </group>
+      <group ref={cloudsRef}>
+        <mesh>
+          <sphereGeometry args={[EARTH_R_KM * 1.008, 64, 64]} />
+          <meshStandardMaterial
+            map={cloudMap}
+            transparent
+            opacity={far ? 0.28 : 0.52}
+            depthWrite={false}
+            roughness={1}
+            metalness={0}
+          />
+        </mesh>
+      </group>
+      {/* Atmosphere limb */}
       <mesh>
-        <sphereGeometry args={[EARTH_R_KM * 1.03, 40, 40]} />
+        <sphereGeometry args={[EARTH_R_KM * 1.02, 48, 48]} />
         <meshBasicMaterial
-          color="#8ec8ff"
+          color="#7ec8ff"
           transparent
-          opacity={far ? 0.35 : 0.16}
+          opacity={far ? 0.18 : 0.12}
           side={THREE.BackSide}
           depthWrite={false}
+          blending={THREE.AdditiveBlending}
         />
       </mesh>
-      {/* Unlit core so software GL still shows a marble at cislunar range */}
+      <mesh>
+        <sphereGeometry args={[EARTH_R_KM * 1.05, 40, 40]} />
+        <meshBasicMaterial
+          color="#4a9de0"
+          transparent
+          opacity={far ? 0.12 : 0.08}
+          side={THREE.BackSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      {/* Soft findability halo (not mass) at long range */}
       {far && (
         <mesh>
-          <sphereGeometry args={[EARTH_R_KM * 1.02, 32, 32]} />
-          <meshBasicMaterial color="#3d8fd4" />
-        </mesh>
-      )}
-      {far && (
-        <mesh>
-          <sphereGeometry args={[EARTH_R_KM * 6, 24, 24]} />
-          <meshBasicMaterial color="#5eb0ff" transparent opacity={0.14} depthWrite={false} />
+          <sphereGeometry args={[EARTH_R_KM * 3.2, 24, 24]} />
+          <meshBasicMaterial color="#5eb0ff" transparent opacity={0.06} depthWrite={false} />
         </mesh>
       )}
     </group>
@@ -164,37 +174,86 @@ function PadApron({ normal }: { normal: THREE.Vector3 }) {
 }
 
 function TrueMoon({ cameraKm }: { cameraKm: number }) {
-  const map = useMemo(() => makeMoonTexture(640), [])
-  const far = cameraKm > 25_000
+  const map = useTexture('/textures/moon.jpg')
+  const far = cameraKm > 40_000
+  useMemo(() => {
+    map.colorSpace = THREE.SRGBColorSpace
+    map.anisotropy = 8
+  }, [map])
   return (
     <group position={[MOON_DIST_KM, 0, 0]}>
       <mesh>
-        <sphereGeometry args={[MOON_R_KM, 56, 56]} />
+        <sphereGeometry args={[MOON_R_KM, 72, 72]} />
         <meshStandardMaterial
           map={map}
-          roughness={0.96}
+          roughness={0.94}
           metalness={0.02}
-          emissive="#2a2a2a"
-          emissiveIntensity={far ? 0.4 : 0.2}
+          emissive="#1c1c1a"
+          emissiveIntensity={far ? 0.28 : 0.08}
         />
       </mesh>
       {far && (
         <mesh>
-          <sphereGeometry args={[MOON_R_KM * 1.05, 28, 28]} />
-          <meshBasicMaterial color="#c8c2b8" />
+          <sphereGeometry args={[MOON_R_KM * 5.5, 18, 18]} />
+          <meshBasicMaterial color="#d0c8bc" transparent opacity={0.11} depthWrite={false} />
         </mesh>
       )}
-      {far && (
-        <mesh>
-          <sphereGeometry args={[MOON_R_KM * 7, 18, 18]} />
-          <meshBasicMaterial color="#d8d0c4" transparent opacity={0.12} depthWrite={false} />
-        </mesh>
+      {cameraKm > 80_000 && (
+        <Html distanceFactor={50_000} style={{ pointerEvents: 'none' }}>
+          <div className="body-label">Moon</div>
+        </Html>
       )}
-      <Html distanceFactor={40_000} style={{ pointerEvents: 'none' }}>
-        <div className="body-label">Moon</div>
-      </Html>
     </group>
   )
+}
+
+function CraftTrail({
+  craftRef,
+  cameraKm,
+  enabled,
+}: {
+  craftRef: RefObject<THREE.Group | null>
+  cameraKm: number
+  enabled: boolean
+}) {
+  const pts = useRef<THREE.Vector3[]>([])
+  const line = useMemo(() => {
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(48 * 3), 3))
+    g.setDrawRange(0, 0)
+    const m = new THREE.LineBasicMaterial({
+      color: '#3dd6c6',
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false,
+    })
+    return new THREE.Line(g, m)
+  }, [])
+
+  useFrame(() => {
+    if (!enabled || !craftRef.current) {
+      line.visible = false
+      return
+    }
+    line.visible = true
+    const pos = craftRef.current.position
+    const trail = pts.current
+    const last = trail[trail.length - 1]
+    if (!last || last.distanceTo(pos) > Math.max(30, cameraKm * 0.0015)) {
+      trail.push(pos.clone())
+      if (trail.length > 48) trail.shift()
+    }
+    const geom = line.geometry
+    const attr = geom.getAttribute('position') as THREE.BufferAttribute
+    for (let i = 0; i < trail.length; i++) {
+      attr.setXYZ(i, trail[i].x, trail[i].y, trail[i].z)
+    }
+    attr.needsUpdate = true
+    geom.setDrawRange(0, trail.length)
+    geom.computeBoundingSphere()
+  })
+
+  return <primitive object={line} />
 }
 
 function CraftAtTrueScale({
@@ -211,12 +270,13 @@ function CraftAtTrueScale({
   const initial = craftKm(progress, destinationId)
   const pose = vehiclePose(progress, destinationId)
   const showPad = detailed && progress < 0.12
+  const markerR = Math.max(18, Math.min(2_400, cameraKm * 0.0045))
 
   useFrame((_, dt) => {
     if (!ref.current) return
     const c = craftKm(progress, destinationId)
     const err = ref.current.position.distanceTo(c.position)
-    const k = err > 200 ? 1 : 1 - Math.exp(-dt * 10)
+    const k = err > 500 ? 1 : 1 - Math.exp(-dt * 14)
     ref.current.position.lerp(c.position, k)
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), c.tangent)
     ref.current.quaternion.slerp(q, k)
@@ -225,6 +285,7 @@ function CraftAtTrueScale({
   return (
     <>
       {showPad && <PadApron normal={initial.position.clone().normalize()} />}
+      <CraftTrail craftRef={ref} cameraKm={cameraKm} enabled={!detailed && progress > 0.08} />
       <group ref={ref} position={initial.position}>
         {detailed ? (
           <StarshipModel
@@ -233,10 +294,32 @@ function CraftAtTrueScale({
             scale={SHIP_MODEL_TO_KM}
           />
         ) : (
-          <mesh>
-            <sphereGeometry args={[Math.max(12, cameraKm * 0.00055), 12, 12]} />
-            <meshBasicMaterial color="#3dd6c6" />
-          </mesh>
+          <>
+            <mesh>
+              <sphereGeometry args={[markerR, 14, 14]} />
+              <meshBasicMaterial color="#3dd6c6" />
+            </mesh>
+            <mesh>
+              <sphereGeometry args={[markerR * 2.8, 12, 12]} />
+              <meshBasicMaterial
+                color="#3dd6c6"
+                transparent
+                opacity={0.22}
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+            <mesh>
+              <sphereGeometry args={[markerR * 5.5, 10, 10]} />
+              <meshBasicMaterial
+                color="#7aefe4"
+                transparent
+                opacity={0.1}
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+          </>
         )}
       </group>
     </>
@@ -324,8 +407,9 @@ function CislunarCamera({
         .addScaledVector(north, -cy * cp * dist * 0.2)
       up = radial
     } else if (dist >= CISLUNAR_FIT_KM) {
-      // Wide enough: orbit the Earth–Moon midpoint so both bodies stay in frame
-      focus.set(MOON_DIST_KM * 0.5, 0, 0)
+      // Wide overview — bias look toward craft so the transfer stays readable
+      const mid = new THREE.Vector3(MOON_DIST_KM * 0.5, 0, 0)
+      focus.copy(craft.position).lerp(mid, 0.55)
       const widePitch = pitch * 0.5
       const wcp = Math.cos(widePitch)
       const wsp = Math.sin(widePitch)
@@ -336,12 +420,16 @@ function CislunarCamera({
       )
       up = _up
     } else {
-      // Ascent / LEO / transfer — orbit the craft (or Earth when far from vehicle)
+      // Ascent / LEO / transfer — always track the craft (Earth may fill background)
       focus.copy(craft.position)
-      if (dist > 20_000) {
-        // Pull focus toward Earth so the planet fills the frame during coast
-        const w = Math.min(1, (dist - 20_000) / 80_000)
-        focus.lerp(new THREE.Vector3(0, 0, 0), w * 0.75)
+      if (dist > 8_000 && progress < 0.55) {
+        // Slight look-back toward Earth so departure context stays in frame
+        const w = Math.min(0.35, (dist - 8_000) / 200_000)
+        focus.lerp(new THREE.Vector3(0, 0, 0), w)
+      }
+      if (dist > 8_000 && progress >= 0.55 && progress < 0.72) {
+        const moon = new THREE.Vector3(MOON_DIST_KM, 0, 0)
+        focus.lerp(moon, 0.25)
       }
       desired.set(
         focus.x + sy * cp * dist,
@@ -400,25 +488,34 @@ function TrueScaleCislunarScene({
   userCamera: boolean
   onCameraKm?: (km: number) => void
 }) {
-  const pathPts = useMemo(() => transferPathKm(120), [])
+  const pathPts = useMemo(() => transferPathKm(160), [])
   const leoPts = useMemo(() => leoPathKm(96), [])
   const camKm = userCamera ? logDistToKm(logDist) : autoDistanceKm(progress)
   const showPaths = camKm > 80 && camKm < 900_000
+  // Highlight flown portion of the teaching TLI ellipse (progress 0.32→0.62 maps to path)
+  const flownPts = useMemo(() => {
+    const u = Math.min(1, Math.max(0, (progress - 0.32) / 0.3))
+    const n = Math.max(2, Math.floor(u * (pathPts.length - 1)) + 1)
+    return pathPts.slice(0, n)
+  }, [pathPts, progress])
 
   return (
     <>
-      <Stars radius={2_000_000} depth={400_000} count={5000} factor={6} saturation={0} fade speed={0.1} />
+      <Stars radius={2_000_000} depth={400_000} count={5500} factor={5} saturation={0} fade speed={0.08} />
       <TrueEarth cameraKm={camKm} />
       <TrueMoon cameraKm={camKm} />
-      {camKm > 80_000 && (
+      {camKm > 60_000 && (
         <Html position={[0, EARTH_R_KM * 1.8, 0]} distanceFactor={80_000} style={{ pointerEvents: 'none' }}>
           <div className="body-label">Earth</div>
         </Html>
       )}
       {showPaths && (
         <>
-          <Line points={leoPts} color="#7dffb3" transparent opacity={0.4} lineWidth={1} />
-          <Line points={pathPts} color="#9ad8ff" transparent opacity={0.55} lineWidth={1} />
+          <Line points={leoPts} color="#7dffb3" transparent opacity={0.35} lineWidth={1} />
+          <Line points={pathPts} color="#5a7a9a" transparent opacity={0.4} lineWidth={1} />
+          {flownPts.length >= 2 && (
+            <Line points={flownPts} color="#9ad8ff" transparent opacity={0.95} lineWidth={2} />
+          )}
         </>
       )}
       <CraftAtTrueScale

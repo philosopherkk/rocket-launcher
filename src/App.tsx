@@ -35,6 +35,9 @@ export default function App() {
     setProgress,
     playing,
     togglePlay,
+    playbackRate,
+    setPlaybackRate,
+    cyclePlaybackRate,
     phase,
     phaseIndex,
   } = useMissionState()
@@ -185,11 +188,13 @@ export default function App() {
             <ViewerBar
               locale={locale}
               playing={playing}
+              playbackRate={playbackRate}
               logDist={logDist}
               userCamera={userCamera}
               cameraKm={cameraKm || logDistToKm(logDist)}
               fullscreenTarget={stageEl}
               onTogglePlay={togglePlay}
+              onCyclePlaybackRate={cyclePlaybackRate}
               onZoomIn={zoomIn}
               onZoomOut={zoomOut}
               onResetView={resetView}
@@ -207,9 +212,11 @@ export default function App() {
             locale={locale}
             progress={progress}
             playing={playing}
+            playbackRate={playbackRate}
             phaseIndex={phaseIndex}
             onProgress={setProgress}
             onTogglePlay={togglePlay}
+            onPlaybackRate={setPlaybackRate}
           />
         </div>
 

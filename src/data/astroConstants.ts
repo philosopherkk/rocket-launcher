@@ -50,6 +50,16 @@ export const SHIP_HEIGHT_M = 52
 export const BOOSTER_HEIGHT_M = 72
 export const VEHICLE_DIAMETER_M = 9
 
+/**
+ * Vehicle-mode Earth sphere radius in scene units (limb / curvature backdrop).
+ * Stack height at true teaching scale = this × (STACK_HEIGHT_M / (EARTH_RADIUS_KM×1000))
+ * ≈ R × 1.95e-5 — invisible; near-Earth craft is a marker + inset (see VehicleScaleScene).
+ */
+export const VEHICLE_EARTH_RADIUS = 16
+
+/** True stack / Earth-radius ratio (124 m / 6,371 km) for teaching disclosure */
+export const STACK_OVER_EARTH_RADIUS = STACK_HEIGHT_M / (EARTH_RADIUS_KM * 1000)
+
 export type ScaleMode = 'auto' | 'planet' | 'vehicle'
 
 /**

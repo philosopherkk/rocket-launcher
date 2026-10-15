@@ -59,7 +59,7 @@ True 1:1 Starship (~120 m class) vs Earth (~12,742 km diameter) cannot be viewed
 | Mode | What is true-scale | What is not |
 | --- | --- | --- |
 | **Planet scale** | Body radii relative to each other; cislunar distances in Earth radii (R⊕); heliocentric orbital distances in AU | Vehicle is a **marker glyph** only — never a giant rocket on Earth |
-| **Vehicle scale** | Starship / Super Heavy silhouette using public ratios (9 m Ø; ~52 m / ~72 m / ~124 m stack) | Earth is a **local backdrop**, not a full-planet 1:1 globe |
+| **Vehicle scale** | When away from Earth: Starship / Super Heavy silhouette at public ratios (9 m Ø; ~52 / ~72 / ~124 m). When Earth is in frame: **marker on the limb** + **vehicle inset** at public proportions | Earth backdrop is for curvature / altitude class — stack is never drawn cartoon-huge vs R⊕ (true 124 m / 6,371 km ≈ 2×10⁻⁵) |
 
 ### Mean values used (`src/data/astroConstants.ts`)
 

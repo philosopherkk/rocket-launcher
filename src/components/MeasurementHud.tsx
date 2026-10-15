@@ -78,8 +78,8 @@ export function MeasurementHud({
       {resolved === 'vehicle' && (
         <p className="scale-exag">
           {locale === 'en'
-            ? 'Vehicle mode: Starship/Super Heavy at public proportions (9 m Ø, 52 m / 72 m / 124 m). Earth is a local backdrop, not full-planet scale.'
-            : '載具模式：Starship／Super Heavy 採公開比例（直徑 9 m，52／72／124 m）。地球為局部背景，非全行星比例。'}
+            ? t(locale, 'vehicleInsetNote')
+            : t(locale, 'vehicleInsetNote')}
         </p>
       )}
 

@@ -77,6 +77,10 @@ const ui = {
     exitFullscreen: 'Exit full screen',
     resume: 'Resume',
     nasaRefs: 'Primary references',
+    scrollZoomHint: 'Scroll on canvas to zoom',
+    vehicleInset: 'Vehicle inset (public proportions)',
+    vehicleInsetNote:
+      'Main view: marker on Earth (stack ≪ R⊕). Inset shows Starship/Super Heavy at published ratios.',
   },
   'zh-Hant': {
     brand: 'Starship 目的地實驗室',
@@ -153,6 +157,10 @@ const ui = {
     exitFullscreen: '離開全螢幕',
     resume: '繼續',
     nasaRefs: '主要參考',
+    scrollZoomHint: '在畫布上滾動以縮放',
+    vehicleInset: '載具插圖（公開比例）',
+    vehicleInsetNote:
+      '主視圖：地球上的標記（全箭 ≪ R⊕）。插圖顯示公開比例的 Starship／Super Heavy。',
   },
 } as const
 

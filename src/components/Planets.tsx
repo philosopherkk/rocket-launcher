@@ -3,6 +3,7 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { DestinationId } from '../data/destinations'
 import { getDestination } from '../data/destinations'
+import { VEHICLE_EARTH_RADIUS } from '../data/astroConstants'
 import { earthPos, targetPos } from '../lib/vehiclePath'
 import {
   makeCloudTexture,
@@ -13,23 +14,24 @@ import {
 
 export function EarthGlobe() {
   const pos = earthPos()
-  const map = useMemo(() => makeEarthTexture(640), [])
-  const clouds = useMemo(() => makeCloudTexture(384), [])
+  const R = VEHICLE_EARTH_RADIUS
+  const map = useMemo(() => makeEarthTexture(768), [])
+  const clouds = useMemo(() => makeCloudTexture(512), [])
   const group = useRef<THREE.Group>(null)
 
   useFrame((_, dt) => {
-    if (group.current) group.current.rotation.y += dt * 0.02
+    if (group.current) group.current.rotation.y += dt * 0.015
   })
 
   return (
     <group position={pos}>
       <group ref={group}>
         <mesh>
-          <sphereGeometry args={[2, 64, 64]} />
+          <sphereGeometry args={[R, 72, 72]} />
           <meshStandardMaterial map={map} roughness={0.8} metalness={0.06} />
         </mesh>
         <mesh>
-          <sphereGeometry args={[2.035, 48, 48]} />
+          <sphereGeometry args={[R * 1.018, 48, 48]} />
           <meshStandardMaterial
             map={clouds}
             transparent
@@ -39,7 +41,6 @@ export function EarthGlobe() {
           />
         </mesh>
       </group>
-      {/* Stylized shells hinting troposphere → upper atmosphere (not to scale) */}
       {(
         [
           { s: 1.02, c: '#7ec8ff', o: 0.1 },
@@ -49,7 +50,7 @@ export function EarthGlobe() {
         ] as const
       ).map((shell) => (
         <mesh key={shell.s} scale={shell.s}>
-          <sphereGeometry args={[2, 40, 40]} />
+          <sphereGeometry args={[R, 40, 40]} />
           <meshBasicMaterial
             color={shell.c}
             transparent
@@ -59,10 +60,6 @@ export function EarthGlobe() {
           />
         </mesh>
       ))}
-      <mesh position={[2.05, 0.25, 0.2]} rotation={[0, 0, -Math.PI / 2]}>
-        <cylinderGeometry args={[0.06, 0.09, 0.16, 10]} />
-        <meshStandardMaterial color="#7a828c" metalness={0.6} roughness={0.35} />
-      </mesh>
     </group>
   )
 }

@@ -2,11 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Locale } from '../data/phases'
 import { t } from '../data/i18n'
 
-export const ZOOM_MIN = -2
-export const ZOOM_MAX = 2
+/** Continuous zoom range (buttons step; wheel scrolls smoothly) */
+export const ZOOM_MIN = -3
+export const ZOOM_MAX = 3
+export const ZOOM_STEP = 0.5
+
 /** Multiplier applied to camera stand-off distance: zoomIn → smaller distance */
 export function zoomDistanceFactor(zoomLevel: number): number {
-  return Math.pow(1.35, -zoomLevel)
+  return Math.pow(1.28, -zoomLevel)
+}
+
+export function clampZoom(z: number): number {
+  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z))
 }
 
 type Props = {
@@ -67,6 +74,10 @@ export function ViewerBar({
     return () => window.removeEventListener('keydown', onKey)
   }, [onTogglePlay])
 
+  const zoomLabel = Number.isInteger(zoomLevel)
+    ? String(zoomLevel)
+    : zoomLevel.toFixed(1)
+
   return (
     <div className="viewer-bar" role="toolbar" aria-label={t(locale, 'viewerBar')}>
       <button
@@ -80,9 +91,7 @@ export function ViewerBar({
         <span className="viewer-icon" aria-hidden>
           {playing ? '❚❚' : '▶'}
         </span>
-        <span>
-          {playing ? t(locale, 'pause') : t(locale, 'resume')}
-        </span>
+        <span>{playing ? t(locale, 'pause') : t(locale, 'resume')}</span>
       </button>
 
       <div className="viewer-group" role="group" aria-label={t(locale, 'zoom')}>
@@ -104,9 +113,9 @@ export function ViewerBar({
           className="viewer-btn viewer-btn-quiet"
           onClick={onZoomReset}
           aria-label={t(locale, 'zoomReset')}
-          title={t(locale, 'zoomReset')}
+          title={`${t(locale, 'zoomReset')} · ${t(locale, 'scrollZoomHint')}`}
         >
-          {t(locale, 'zoomLevel').replace('{n}', String(zoomLevel))}
+          {t(locale, 'zoomLevel').replace('{n}', zoomLabel)}
         </button>
         <button
           type="button"

@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AtmospherePanel } from './components/AtmospherePanel'
 import { Controls } from './components/Controls'
 import { DestinationPanel } from './components/DestinationPanel'
@@ -6,10 +6,13 @@ import { MeasurementHud } from './components/MeasurementHud'
 import { MissionScene } from './components/MissionScene'
 import { PhasePanel } from './components/PhasePanel'
 import { Timeline } from './components/Timeline'
+import { VehicleInset } from './components/VehicleInset'
 import { VehiclePanel } from './components/VehiclePanel'
-import { ViewerBar, ZOOM_MAX, ZOOM_MIN } from './components/ViewerBar'
+import { clampZoom, ViewerBar, ZOOM_STEP } from './components/ViewerBar'
+import { resolveScaleMode } from './data/astroConstants'
 import { t } from './data/i18n'
 import { useMissionState } from './hooks/useMissionState'
+import { vehiclePose } from './lib/vehiclePath'
 
 export default function App() {
   const {
@@ -38,13 +41,41 @@ export default function App() {
     setStageEl(node)
   }, [])
 
-  const zoomIn = useCallback(() => setZoomLevel((z) => Math.min(ZOOM_MAX, z + 1)), [])
-  const zoomOut = useCallback(() => setZoomLevel((z) => Math.max(ZOOM_MIN, z - 1)), [])
+  const zoomIn = useCallback(
+    () => setZoomLevel((z) => clampZoom(z + ZOOM_STEP)),
+    [],
+  )
+  const zoomOut = useCallback(
+    () => setZoomLevel((z) => clampZoom(z - ZOOM_STEP)),
+    [],
+  )
   const zoomReset = useCallback(() => setZoomLevel(0), [])
+
+  // Smooth scroll / trackpad zoom on the 3D canvas (not on HUD controls)
+  useEffect(() => {
+    const el = stageEl
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target?.closest('.viewer-bar, .measure-hud, .vehicle-inset, button, select, input')) {
+        return
+      }
+      e.preventDefault()
+      // deltaY > 0 → zoom out (increase stand-off)
+      const sensitivity = e.deltaMode === 1 ? 0.12 : 0.0018
+      setZoomLevel((z) => clampZoom(z - e.deltaY * sensitivity))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [stageEl])
 
   useEffect(() => {
     document.documentElement.lang = locale === 'zh-Hant' ? 'zh-Hant' : 'en'
   }, [locale])
+
+  const resolvedScale = resolveScaleMode(scaleMode, progress)
+  const pose = useMemo(() => vehiclePose(progress, destinationId), [progress, destinationId])
+  const showInset = resolvedScale === 'vehicle' && pose.nearEarth
 
   return (
     <div className="app" data-locale={locale}>
@@ -92,6 +123,12 @@ export default function App() {
               onZoomIn={zoomIn}
               onZoomOut={zoomOut}
               onZoomReset={zoomReset}
+            />
+            <VehicleInset
+              locale={locale}
+              shipOnly={pose.shipOnly || !!pose.booster}
+              plume={pose.plume}
+              visible={showInset}
             />
             <MeasurementHud
               locale={locale}

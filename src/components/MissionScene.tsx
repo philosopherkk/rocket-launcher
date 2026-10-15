@@ -19,7 +19,8 @@ import {
   targetHelioAu,
   transferCurvePoints,
 } from '../lib/transferGeometry'
-import { vehiclePose } from '../lib/vehiclePath'
+import { VEHICLE_EARTH_RADIUS } from '../data/astroConstants'
+import { cameraFraming, vehiclePose } from '../lib/vehiclePath'
 import {
   makeCloudTexture,
   makeEarthTexture,
@@ -296,22 +297,50 @@ function PlanetScaleScene({
   )
 }
 
-function LiveShip({ progress, destinationId }: { progress: number; destinationId: DestinationId }) {
+/** Tiny glyph — findable but clearly ≪ Earth limb (true stack/R⊕ ≈ 2e-5). */
+function EarthCraftMarker() {
+  // ~0.25% of Earth radius in vehicle-mode scene units (still >> true 0.002%)
+  const h = VEHICLE_EARTH_RADIUS * 0.0025
+  return (
+    <group>
+      <mesh>
+        <sphereGeometry args={[h * 0.4, 8, 8]} />
+        <meshBasicMaterial color="#3dd6c6" />
+      </mesh>
+      <mesh position={[0, h * 0.85, 0]}>
+        <coneGeometry args={[h * 0.28, h * 1.2, 6]} />
+        <meshBasicMaterial color="#e8eef8" />
+      </mesh>
+    </group>
+  )
+}
+
+function LiveShip({
+  progress,
+  destinationId,
+  scale = 0.72,
+}: {
+  progress: number
+  destinationId: DestinationId
+  scale?: number
+}) {
   const pose = vehiclePose(progress, destinationId)
   return (
-    <StarshipModel shipOnly={pose.shipOnly || !!pose.booster} plume={pose.plume} scale={0.72} />
+    <StarshipModel shipOnly={pose.shipOnly || !!pose.booster} plume={pose.plume} scale={scale} />
   )
 }
 
 function LiveBooster({
   progress,
   destinationId,
+  scale = 0.72,
 }: {
   progress: number
   destinationId: DestinationId
+  scale?: number
 }) {
   const pose = vehiclePose(progress, destinationId)
-  return <StarshipModel boosterOnly plume={pose.booster?.plume ?? 0} scale={0.72} />
+  return <StarshipModel boosterOnly plume={pose.booster?.plume ?? 0} scale={scale} />
 }
 
 function VehicleCamera({
@@ -328,14 +357,22 @@ function VehicleCamera({
   const zf = zoomDistanceFactor(zoomLevel)
   useFrame((_, dt) => {
     const pose = vehiclePose(progress, destinationId)
-    const offset = new THREE.Vector3(8, 4.5, 11).multiplyScalar(zf)
-    const desired = pose.position.clone().add(offset)
+    const framing = cameraFraming(progress, pose)
+    const offset = framing.offset.clone().multiplyScalar(zf)
+    const desired = framing.look.clone().add(offset)
     const k = 1 - Math.exp(-dt * 3)
     camera.position.lerp(desired, k)
-    look.current.lerp(pose.position, k)
+    look.current.lerp(framing.look, k)
     _lookMat.lookAt(camera.position, look.current, _up)
     _lookQ.setFromRotationMatrix(_lookMat)
     camera.quaternion.slerp(_lookQ, k)
+    const persp = camera as THREE.PerspectiveCamera
+    if (persp.isPerspectiveCamera) {
+      persp.fov = framing.fov
+      persp.near = pose.nearEarth ? 0.2 : 0.05
+      persp.far = pose.nearEarth ? 400 : 240
+      persp.updateProjectionMatrix()
+    }
   })
   return null
 }
@@ -349,7 +386,7 @@ function VehicleScaleScene({
   destinationId: DestinationId
   zoomLevel: number
 }) {
-  const shipRef = useRef<THREE.Group>(null)
+  const craftRef = useRef<THREE.Group>(null)
   const boostRef = useRef<THREE.Group>(null)
   const initial = vehiclePose(progress, destinationId)
   const cueMap = useMemo(() => {
@@ -360,14 +397,14 @@ function VehicleScaleScene({
 
   useFrame((_, dt) => {
     const target = vehiclePose(progress, destinationId)
-    if (shipRef.current) {
-      const err = shipRef.current.position.distanceTo(target.position)
-      const k = err > 1.5 ? 1 : 1 - Math.exp(-dt * 12)
-      shipRef.current.position.lerp(target.position, k)
-      shipRef.current.quaternion.slerp(target.quaternion, k)
+    if (craftRef.current) {
+      const err = craftRef.current.position.distanceTo(target.position)
+      const k = err > 2 ? 1 : 1 - Math.exp(-dt * 12)
+      craftRef.current.position.lerp(target.position, k)
+      craftRef.current.quaternion.slerp(target.quaternion, k)
     }
     if (boostRef.current) {
-      if (target.booster) {
+      if (target.booster && !target.nearEarth) {
         boostRef.current.visible = true
         const err = boostRef.current.position.distanceTo(target.booster.position)
         const k = err > 1.5 ? 1 : 1 - Math.exp(-dt * 11)
@@ -379,17 +416,25 @@ function VehicleScaleScene({
     }
   })
 
+  const nearEarth = initial.nearEarth || vehiclePose(progress, destinationId).nearEarth
+
   return (
     <>
-      <Stars radius={180} depth={70} count={4500} factor={3.5} saturation={0} fade speed={0.2} />
+      <Stars radius={280} depth={90} count={5000} factor={4} saturation={0} fade speed={0.2} />
       <EarthGlobe />
-      {/* Soft destination cue — backdrop only, not planet-scale */}
-      <mesh position={[22, 4, -6]}>
-        <sphereGeometry args={[1.15, 40, 40]} />
-        <meshStandardMaterial map={cueMap} roughness={0.95} metalness={0.02} />
-      </mesh>
-      <group ref={shipRef} position={initial.position} quaternion={initial.quaternion}>
-        <LiveShip progress={progress} destinationId={destinationId} />
+      {/* Soft destination cue — backdrop only when leaving Earth */}
+      {!nearEarth && (
+        <mesh position={[22, 4, -6]}>
+          <sphereGeometry args={[1.15, 40, 40]} />
+          <meshStandardMaterial map={cueMap} roughness={0.95} metalness={0.02} />
+        </mesh>
+      )}
+      <group ref={craftRef} position={initial.position} quaternion={initial.quaternion}>
+        {nearEarth ? (
+          <EarthCraftMarker />
+        ) : (
+          <LiveShip progress={progress} destinationId={destinationId} scale={0.72} />
+        )}
       </group>
       <group ref={boostRef} visible={false}>
         <LiveBooster progress={progress} destinationId={destinationId} />
@@ -406,7 +451,7 @@ function SceneBody({ progress, destinationId, scaleMode, zoomLevel = 0 }: Props)
       <color attach="background" args={['#03050c']} />
       <fog
         attach="fog"
-        args={['#03050c', resolved === 'planet' ? 200 : 90, resolved === 'planet' ? 600 : 240]}
+        args={['#03050c', resolved === 'planet' ? 200 : 40, resolved === 'planet' ? 600 : 220]}
       />
       <SunLight />
       {resolved === 'planet' ? (

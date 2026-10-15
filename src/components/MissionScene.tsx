@@ -26,11 +26,14 @@ import {
   makeMoonTexture,
   makePlanetTexture,
 } from '../lib/textures'
+import { zoomDistanceFactor } from './ViewerBar'
 
 type Props = {
   progress: number
   destinationId: DestinationId
   scaleMode: ScaleMode
+  /** Discrete zoom step (−2…+2); positive = closer */
+  zoomLevel?: number
 }
 
 const _up = new THREE.Vector3(0, 1, 0)
@@ -131,33 +134,41 @@ function PlanetCamera({
   destinationId,
   lookAt,
   cislunar,
+  zoomLevel,
 }: {
   progress: number
   destinationId: DestinationId
   lookAt: THREE.Vector3
   cislunar: boolean
+  zoomLevel: number
 }) {
   const { camera } = useThree()
   const look = useRef(new THREE.Vector3())
+  const zf = zoomDistanceFactor(zoomLevel)
 
   useFrame((_, dt) => {
     const s = samplePath(progress, destinationId)
-    let desired: THREE.Vector3
+    let base: THREE.Vector3
+    let focus = lookAt
     if (cislunar) {
-      if (progress < 0.32) desired = new THREE.Vector3(4, 2.5, 8)
+      if (progress < 0.32) base = new THREE.Vector3(4, 2.5, 8)
       else if (progress < 0.72) {
         // Pull back enough to keep Earth–Moon + transfer ellipse readable
-        desired = new THREE.Vector3(28, 18, 48)
-      } else desired = new THREE.Vector3(10, 6, 16)
+        base = new THREE.Vector3(28, 18, 48)
+        focus = new THREE.Vector3(MOON_DISTANCE_EARTH_RADII * 0.45, 0, 0)
+      } else base = new THREE.Vector3(10, 6, 16)
     } else {
       const a2 = targetHelioAu(destinationId)
       const span = Math.max(1.2, a2)
-      desired = s.position.clone().add(new THREE.Vector3(span * 0.9, span * 0.55, span * 1.1))
+      base = s.position.clone().add(new THREE.Vector3(span * 0.9, span * 0.55, span * 1.1))
     }
+    // Scale stand-off from focus without changing scrubber-driven path samples
+    const offset = base.clone().sub(focus).multiplyScalar(zf)
+    const desired = focus.clone().add(offset)
     const err = camera.position.distanceTo(desired)
     const k = err > 5 ? 1 : 1 - Math.exp(-dt * 2.5)
     camera.position.lerp(desired, k)
-    look.current.lerp(lookAt, k)
+    look.current.lerp(focus, k)
     _lookMat.lookAt(camera.position, look.current, _up)
     _lookQ.setFromRotationMatrix(_lookMat)
     camera.quaternion.slerp(_lookQ, Math.min(1, k * 1.1))
@@ -175,9 +186,11 @@ function PlanetCamera({
 function PlanetScaleScene({
   progress,
   destinationId,
+  zoomLevel,
 }: {
   progress: number
   destinationId: DestinationId
+  zoomLevel: number
 }) {
   const marker = useRef<THREE.Group>(null)
   const cislunar = isCislunar(destinationId)
@@ -277,6 +290,7 @@ function PlanetScaleScene({
         destinationId={destinationId}
         lookAt={sample.position}
         cislunar={cislunar}
+        zoomLevel={zoomLevel}
       />
     </>
   )
@@ -303,15 +317,19 @@ function LiveBooster({
 function VehicleCamera({
   progress,
   destinationId,
+  zoomLevel,
 }: {
   progress: number
   destinationId: DestinationId
+  zoomLevel: number
 }) {
   const { camera } = useThree()
   const look = useRef(new THREE.Vector3())
+  const zf = zoomDistanceFactor(zoomLevel)
   useFrame((_, dt) => {
     const pose = vehiclePose(progress, destinationId)
-    const desired = pose.position.clone().add(new THREE.Vector3(8, 4.5, 11))
+    const offset = new THREE.Vector3(8, 4.5, 11).multiplyScalar(zf)
+    const desired = pose.position.clone().add(offset)
     const k = 1 - Math.exp(-dt * 3)
     camera.position.lerp(desired, k)
     look.current.lerp(pose.position, k)
@@ -325,9 +343,11 @@ function VehicleCamera({
 function VehicleScaleScene({
   progress,
   destinationId,
+  zoomLevel,
 }: {
   progress: number
   destinationId: DestinationId
+  zoomLevel: number
 }) {
   const shipRef = useRef<THREE.Group>(null)
   const boostRef = useRef<THREE.Group>(null)
@@ -374,12 +394,12 @@ function VehicleScaleScene({
       <group ref={boostRef} visible={false}>
         <LiveBooster progress={progress} destinationId={destinationId} />
       </group>
-      <VehicleCamera progress={progress} destinationId={destinationId} />
+      <VehicleCamera progress={progress} destinationId={destinationId} zoomLevel={zoomLevel} />
     </>
   )
 }
 
-function SceneBody({ progress, destinationId, scaleMode }: Props) {
+function SceneBody({ progress, destinationId, scaleMode, zoomLevel = 0 }: Props) {
   const resolved = resolveScaleMode(scaleMode, progress)
   return (
     <>
@@ -390,15 +410,23 @@ function SceneBody({ progress, destinationId, scaleMode }: Props) {
       />
       <SunLight />
       {resolved === 'planet' ? (
-        <PlanetScaleScene progress={progress} destinationId={destinationId} />
+        <PlanetScaleScene
+          progress={progress}
+          destinationId={destinationId}
+          zoomLevel={zoomLevel}
+        />
       ) : (
-        <VehicleScaleScene progress={progress} destinationId={destinationId} />
+        <VehicleScaleScene
+          progress={progress}
+          destinationId={destinationId}
+          zoomLevel={zoomLevel}
+        />
       )}
     </>
   )
 }
 
-export function MissionScene({ progress, destinationId, scaleMode }: Props) {
+export function MissionScene({ progress, destinationId, scaleMode, zoomLevel = 0 }: Props) {
   const resolved = resolveScaleMode(scaleMode, progress)
   return (
     <Canvas
@@ -422,6 +450,7 @@ export function MissionScene({ progress, destinationId, scaleMode }: Props) {
         progress={progress}
         destinationId={destinationId}
         scaleMode={scaleMode}
+        zoomLevel={zoomLevel}
         key={`${destinationId}-${resolved}`}
       />
     </Canvas>

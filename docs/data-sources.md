@@ -79,18 +79,38 @@ True 1:1 Starship (~120 m class) vs Earth (~12,742 km diameter) cannot be viewed
 
 **Trajectory geometry:** cislunar patched-conic teaching ellipse (LEO perigee → lunar-distance apogee); heliocentric ideal Hohmann ellipse matching `orbital.ts` Δv / TOF. Path measurements (distance, altitude / heliocentric r, characteristic speed, peri/apo or transfer *a* at Advanced) are tied to the scrubber parameter — not a straight-line toy path.
 
+## Atmosphere, aero-thermo & entry (teaching)
+
+| Topic | Value / statement used | Source class |
+| --- | --- | --- |
+| Earth layer bands (tropo→exo) | ~0–12 / 12–50 / 50–85 / 85–600 / 600+ km | NOAA / textbook teaching bands (boundaries vary) |
+| Scale height near surface | H≈RT/(Mg) ~7–8 km | Standard atmosphere teaching |
+| Entry interface (teaching) | ~100–120 km (~122 km / 400 kft often cited) | Common aerospace teaching / public Apollo-era discussions |
+| LEO circular speed order | ~7.7–7.8 km/s at ~300 km | Vis-viva with μ⊕≈398,600 km³/s² |
+| Lunar-return Earth entry speed order | ~11 km/s class | Apollo / textbook public order-of-magnitude |
+| Dynamic pressure | q=½ρv²; Max-Q = peak q on ascent | Standard rocketry |
+| Stagnation convective heating scale | ∝ √(ρ/R_n)·V³ (Sutton–Graves class) | Engineering correlation — **order-of-magnitude only** |
+| Shock vs friction | Heat mainly post-shock enthalpy / convection (+ radiation at high V∞) | Standard hypersonic entry teaching |
+| Lunar surface pressure | ~3×10⁻¹⁵ bar class | [NASA Moon fact sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html) |
+| Mars surface pressure / CO₂ | ~610 Pa; ~95% CO₂; a=1.524 AU; R≈3,389.5 km | [NASA Mars fact sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html) |
+| Venus surface pressure / T | ~92 bar; ~464°C class | [NASA Venus fact sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html) |
+| Lunar SOI (textbook) | ~66,000 km class | Patched-conic teaching (Laplace SOI) |
+| Earth–Moon mean distance | 384,400 km | NASA / IAU fact-sheet class |
+
+**Explicitly not claimed:** Starship peak heat rates q̇, Max-Q throttle schedules, bondline margins, RF blackout durations, or certified lunar-return corridors.
+
 ## Accuracy labels
 
-- **Fact:** Starship vehicle panel numbers with SpaceX/NASA links
-- **Idealized model:** Hohmann Δv / TOF / synodic periods from circular coplanar math
-- **Architecture class (NASA studies):** conjunction vs opposition Mars round-trips
+- **Fact:** Starship vehicle panel numbers with SpaceX/NASA links; planetary fact-sheet radii/pressures/a
+- **Idealized model:** Hohmann Δv / TOF / synodic periods; vis-viva on teaching ellipses; Sutton–Graves-class scaling (labeled)
+- **Architecture class (NASA studies):** conjunction vs opposition Mars round-trips; Artemis/HLS public CONOPS
 - **Illustrative:** scrubber phase durations, simplified vehicle silhouette, procedural body textures
 - **Scale disclosure:** dual planet / vehicle modes; heliocentric radius exaggeration labeled in HUD
-- **Not invented as Starship missions:** crewed Venus / Mercury / Jupiter round-trips
+- **Not invented as Starship missions:** crewed Venus / Mercury / Jupiter round-trips; unpublished heat-rate tables
 
 ## Deliberately unused as “fact”
 
 - Secondary blog spec sheets that conflict with SpaceX’s vehicle page
 - Exact future launch open/close calendars without an ephemeris product
-- Unpublished Starship Mars/Moon burn tables presented as certified
+- Unpublished Starship Mars/Moon burn tables or heat-rate tables presented as certified
 - Claiming 1:1 rocket↔Earth in a single useful viewport

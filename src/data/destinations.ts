@@ -253,9 +253,11 @@ export const destinations: Destination[] = [
           windowExplain: 'Conjunction ≈ long stay / lower energy; opposition ≈ short stay / higher energy, sometimes with Venus flybys in studied profiles (NASA NTRS studies).',
         },
         advanced: {
-          overview: 'Porkchop plots map C3 vs TOF across a launch period. Human architecture papers trade ~1000-day conjunction vs ≤760-day opposition (NASA ACR Mars transportation).',
-          energyExplain: 'Add LEO→escape, capture or aerocapture, landing, ascent, and TEI. Chemical all-propulsive opposition ships grow heavy; SEP/NTP trades appear in NASA studies—not Starship-certified numbers.',
-          windowExplain: 'Return opportunities are not free: after conjunction arrival you loiter ~300+ days class for the next cheap Earthbound alignment. Shortening stay raises Δv nonlinearly.',
+          overview:
+            'Porkchop plots map Earth-departure C3 and arrival v∞ vs TOF across a launch period (NASA Trajectory Browser class). Human architecture papers trade ~1000-day conjunction-class round trips (long Mars stay) vs ≤~760-day opposition-class (short stay, higher energy) — NASA ACR Mars transportation white paper. Ideal Hohmann a≈1.262 AU, coast ~259 days (JPL edu). This app plots that teaching ellipse; real missions use Lambert / ephemeris solutions.',
+          energyExplain: `Ideal heliocentric Δv sum ~${formatKms(marsH.heliocentricDv_kms)} (circular coplanar; μ☉ standard). Still add LEO→escape, capture or aerocapture, EDL, ascent, and TEI. Chemical all-propulsive opposition architectures grow heavy; SEP/NTP trades appear in NASA studies — not Starship-certified burn tables. Thin CO₂ atmosphere (~610 Pa) helps little for Starship-class β.`,
+          windowExplain:
+            'Synodic period ~780 days (~25–26 months; NASA Basics of Space Flight). After conjunction-class arrival you typically loiter hundreds of days for the next cheap Earthbound alignment. Shortening stay raises Δv nonlinearly; some studied opposition profiles use Venus gravity assists. Exact open/close calendars are mission-specific — not invented here.',
         },
       },
       'zh-Hant': {
@@ -270,9 +272,11 @@ export const destinations: Destination[] = [
           windowExplain: '合型≈長停留／較低能量；衝型≈短停留／較高能量，部分研究剖面含金星飛掠（NASA NTRS）。',
         },
         advanced: {
-          overview: '豬肉圖（porkchop）描繪發射期內 C3 與飛行時間。載人架構文獻取捨約 1000 日合型與 ≤760 日衝型（NASA ACR 火星運輸）。',
-          energyExplain: '還要加上近地軌道→逃逸、捕獲或氣動捕獲、著陸、上升與 TEI。全化學衝型載具質量上升；NASA 研究出現 SEP／NTP 取捨——非 Starship 認證數字。',
-          windowExplain: '回程機會並非免費：合型到達後需停留約 300+ 日量級等待下一個便宜的返回對齊。縮短停留會使 Δv 非線性上升。',
+          overview:
+            '豬肉圖描繪發射期內地球出發 C3、到達 v∞ 與飛行時間（NASA Trajectory Browser 類）。載人架構取捨約 1000 日合型往返（長停留）與 ≤約 760 日衝型（短停留、能量更高）——NASA ACR 火星運輸白皮書。理想霍曼 a≈1.262 AU，滑行約 259 日（JPL 教育）。本應用繪製該教學橢圓；真實任務用 Lambert／星曆。',
+          energyExplain: `理想日心 Δv 合計約 ${formatKms(marsH.heliocentricDv_kms)}（圓共面；標準 μ☉）。還需加近地→逃逸、捕獲或氣動捕獲、EDL、上升與 TEI。全化學衝型架構質量上升；NASA 研究出現 SEP／NTP 取捨——非 Starship 認證點火表。稀薄 CO₂（約 610 Pa）對 Starship 級 β 幫助有限。`,
+          windowExplain:
+            '會合週期約 780 日（約 25–26 個月；NASA《太空飛行基礎》）。合型到達後通常停留數百日等待下一個便宜返回對齊。縮短停留使 Δv 非線性上升；部分衝型研究剖面含金星重力助推。精確開關窗隨任務而定——此處不虛構。',
         },
       },
     },

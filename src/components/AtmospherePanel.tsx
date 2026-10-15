@@ -21,7 +21,12 @@ export function AtmospherePanel({ locale, difficulty, destinationId, phaseId }: 
   const intro = atmosphereIntro[ctx][locale][difficulty]
   const body = getBodyAtmosphere(destinationId)
   const showEarthLayers = destinationId === 'moon' || ctx === 'ascent' || ctx === 'entry'
-  const showHeating = ctx === 'entry' || ctx === 'ascent' || phaseId === 'lunarApproach'
+  const showHeating =
+    ctx === 'entry' ||
+    ctx === 'ascent' ||
+    ctx === 'vacuum' ||
+    phaseId === 'lunarApproach' ||
+    difficulty !== 'beginner'
 
   return (
     <section className="atmosphere-panel" aria-label={t(locale, 'atmosphereTitle')}>
@@ -68,7 +73,20 @@ export function AtmospherePanel({ locale, difficulty, destinationId, phaseId }: 
           <div className="heating-topics">
             {heatingTopics
               .filter((topic) => {
-                if (ctx === 'ascent') return topic.id === 'dynamic-pressure' || topic.id === 'not-friction'
+                if (ctx === 'ascent') {
+                  return (
+                    topic.id === 'dynamic-pressure' ||
+                    topic.id === 'not-friction' ||
+                    (difficulty !== 'beginner' && topic.id === 'heat-flux')
+                  )
+                }
+                if (ctx === 'vacuum') {
+                  return topic.id === 'soi' || (difficulty === 'advanced' && topic.id === 'not-friction')
+                }
+                // entry / general
+                if (difficulty === 'beginner') {
+                  return ['not-friction', 'entry-corridor', 'tps'].includes(topic.id)
+                }
                 return true
               })
               .map((topic) => (

@@ -254,11 +254,11 @@ export const phases: MissionPhase[] = [
         advanced: {
           title: 'Cislunar transfer dynamics',
           narrative:
-            'This visualization shows a simplified Earth–Moon transfer. Real HLS profiles may target NRHO and involve Orion rendezvous; a pure Starship round-trip cargo profile would differ. We label this as educational geometry, not a certified flight plan.',
+            'This visualization shows a patched-conic teaching ellipse (LEO perigee → lunar-distance apogee ≈384,400 km). Real HLS profiles may target NRHO and involve Orion rendezvous; cargo-only Starship profiles differ. Educational geometry — not a certified flight plan. TLI Δv order ~3.1–3.2 km/s from LEO (textbook/Apollo class; Starship burn tables unpublished).',
           physics:
-            'Three-body dynamics (Earth–Moon–spacecraft) dominate near NRHO. Patched two-body approximations break down; station-keeping costs appear.',
+            'Vis-viva on the transfer: v=√[μ(2/r−1/a)]. Lunar SOI ~66,000 km class (textbook) marks where lunar-centered legs dominate in patched-conic intuition. Near NRHO, CR3BP / three-body dynamics and station-keeping matter; two-body patches break down.',
           engineering:
-            'Challenges: precision optical/radiometric navigation, propellant thermal stratification, and radiation environment for crew configurations (HLS crew transfer details are NASA-led with Orion).',
+            'Challenges: optical/radiometric navigation, mid-course Δv budget, propellant thermal stratification, and radiation for crew configurations (HLS crew transfer is NASA-led with Orion). Free-return vs non-free-return trades are mission-specific.',
         },
       },
       'zh-Hant': {
@@ -279,10 +279,11 @@ export const phases: MissionPhase[] = [
         advanced: {
           title: '地月空間轉移動力學',
           narrative:
-            '本視覺化為簡化的地月轉移。真實 HLS 可能以 NRHO 為目標並與 Orion 交會；純 Starship 往返貨運剖面會不同。此處標示為教學幾何，而非認證飛行計畫。',
-          physics: '近 NRHO 時三體動力學（地－月－航天器）占主導。拼接二體近似會失效，並出現維持軌道成本。',
+            '本視覺化為拼接圓錐教學橢圓（近地近地點→地月距離遠地點≈384,400 公里）。真實 HLS 可能以 NRHO 為目標並與 Orion 交會；純貨運剖面不同。教學幾何——非認證飛行計畫。從近地軌道 TLI Δv 約 3.1–3.2 km/s（教科書／阿波羅量級；Starship 點火表未公開）。',
+          physics:
+            '轉移上 vis-viva：v=√[μ(2/r−1/a)]。月球 SOI 約 66,000 公里量級（教科書）標示拼接圓錐中改以月球為中心的區段。近 NRHO 時圓型限制三體／三體動力學與維持軌道重要；二體拼接失效。',
           engineering:
-            '挑戰：精密光學／無線電導航、推進劑熱分層，以及乘員構型的輻射環境（HLS 乘員轉移細節由 NASA 與 Orion 主導）。',
+            '挑戰：光學／無線電導航、中途 Δv 預算、推進劑熱分層，以及乘員構型輻射（HLS 乘員轉移由 NASA 與 Orion 主導）。自由返回與非自由返回取捨隨任務而定。',
         },
       },
     },
@@ -501,11 +502,11 @@ export const phases: MissionPhase[] = [
         advanced: {
           title: 'Hyperbolic-entry class challenges',
           narrative:
-            'We do not invent peak heat-rate numbers for a Starship lunar return. Where public data is missing, the lesson states uncertainty and focuses on mechanisms.',
+            'Lunar-return Earth entry is ~11 km/s class at interface vs LEO ~7.5–8 km/s (Apollo/textbook public orders). We do not invent Starship peak heat-rate q̇ or bank schedules. Where public data is missing, the lesson states uncertainty and focuses on mechanisms (shock heating, corridor, TPS).',
           physics:
-            'Flight-path angle corridor: too shallow → skip-out; too steep → peak heat flux q̇ and load exceedance. At high v∞, shock-layer radiation can add to convection. Knudsen number falls from free-molecular at interface toward continuum in the lower atmosphere.',
+            'Corridor on flight-path angle γ: too shallow → skip-out; too steep → peak q̇, q=½ρv², and g exceedance. Stagnation convective flux teaching scale ∝ √(ρ/R_n)·V³ (Sutton–Graves class); at high V∞ shock-layer radiation adds. Kn falls from free-molecular at interface toward continuum lower down. Heat is post-shock enthalpy, not rubbing friction.',
           engineering:
-            'Challenges: TPS gap fillers and tile loss tolerance, real-time guidance during blackout, and certifying human-rating if crew are aboard—requirements evolve with NASA/SpaceX agreements.',
+            'Challenges: TPS gap fillers and tile-loss tolerance (public windward-tile approach), RF blackout (ω_p vs link frequency), flap authority, engine relight, and human-rating if crew aboard — requirements evolve with NASA/SpaceX agreements. Certified lunar-return pulses unpublished.',
         },
       },
       'zh-Hant': {
@@ -529,11 +530,11 @@ export const phases: MissionPhase[] = [
         advanced: {
           title: '高能量再入級挑戰',
           narrative:
-            '我們不虛構 Starship 月球返回的峰值熱流數字。公開數據不足時，課程會標明不確定性並聚焦機制。',
+            '月球返回地球再入介面約 11 km/s 量級，近地約 7.5–8 km/s（阿波羅／教科書公開量級）。不虛構 Starship 峰值熱流 q̇ 或滾轉程序。公開數據不足時標明不確定性，聚焦機制（激波加熱、走廊、熱防護）。',
           physics:
-            '飛行路徑角走廊：太淺會跳飛；太陡則峰值熱流 q̇ 與載荷超限。高 v∞ 時激波層輻射可疊加對流。克努森數從介面自由分子流降至下層大氣連續流。',
+            '飛行路徑角 γ 走廊：太淺→跳飛；太陡→峰值 q̇、q=½ρv² 與 g 超限。滯止對流教學標度 ∝ √(ρ/R_n)·V³（Sutton–Graves 類）；高 V∞ 時激波層輻射疊加。Kn 從介面自由分子降至下層連續流。熱來自激波後焓，非摩擦。',
           engineering:
-            '挑戰：熱防護系統縫隙填充與掉瓦容錯、黑障期間即時導引，以及乘員在船時的載人認證——需求隨 NASA／SpaceX 協議演進。',
+            '挑戰：熱防護縫隙填充與掉瓦容錯（公開迎風瓦方案）、射頻黑障（ω_p 相對鏈路頻率）、襟翼能力、引擎再點火，以及乘員載人認證——隨 NASA／SpaceX 協議演進。認證級月球返回熱脈衝未公開。',
         },
       },
     },

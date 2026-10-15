@@ -21,8 +21,8 @@ export function Timeline({
   return (
     <div className="timeline">
       <div className="timeline-top">
-        <button type="button" className="play-btn" onClick={onTogglePlay}>
-          {playing ? t(locale, 'pause') : t(locale, 'play')}
+        <button type="button" className="play-btn" onClick={onTogglePlay} aria-pressed={playing}>
+          {playing ? t(locale, 'pause') : progress > 0 && progress < 1 ? t(locale, 'resume') : t(locale, 'play')}
         </button>
         <span className="timeline-label">{t(locale, 'timeline')}</span>
         <span className="timeline-hint">{t(locale, 'scrubHint')}</span>

@@ -100,26 +100,31 @@ export function MeasurementHud({
             <dd>{sample.heliocentricAu.toFixed(3)} AU</dd>
           </div>
         )}
-        {sample.speedKmS != null && (
+        {sample.speedKmS != null && difficulty !== 'beginner' && (
           <div>
             <dt>{t(locale, 'measSpeed')}</dt>
             <dd>{formatSpeed(sample.speedKmS, locale)}</dd>
           </div>
         )}
-        <div>
-          <dt>{t(locale, 'measTraveled')}</dt>
-          <dd>{formatKm(sample.distanceTraveledKm, locale)}</dd>
-        </div>
-        <div>
-          <dt>{t(locale, 'measRemaining')}</dt>
-          <dd>{formatKm(sample.distanceRemainingKm, locale)}</dd>
-        </div>
-        {difficulty === 'advanced' && sample.transferA_AU != null && (
+        {difficulty !== 'beginner' && (
           <div>
-            <dt>{t(locale, 'measTransferA')}</dt>
-            <dd>{sample.transferA_AU.toFixed(3)} AU</dd>
+            <dt>{t(locale, 'measTraveled')}</dt>
+            <dd>{formatKm(sample.distanceTraveledKm, locale)}</dd>
           </div>
         )}
+        {difficulty !== 'beginner' && (
+          <div>
+            <dt>{t(locale, 'measRemaining')}</dt>
+            <dd>{formatKm(sample.distanceRemainingKm, locale)}</dd>
+          </div>
+        )}
+        {(difficulty === 'intermediate' || difficulty === 'advanced') &&
+          sample.transferA_AU != null && (
+            <div>
+              <dt>{t(locale, 'measTransferA')}</dt>
+              <dd>{sample.transferA_AU.toFixed(3)} AU</dd>
+            </div>
+          )}
         {difficulty === 'advanced' && sample.periapsisKm != null && sample.apoapsisKm != null && (
           <div>
             <dt>{t(locale, 'measPeriApo')}</dt>
@@ -130,6 +135,13 @@ export function MeasurementHud({
         )}
       </dl>
       <p className="measure-note">{locale === 'en' ? sample.noteEn : sample.noteZh}</p>
+      {difficulty === 'advanced' && (
+        <p className="measure-note">
+          {locale === 'en'
+            ? 'Advanced: speeds use vis-viva on the teaching ellipse (μ⊕ / μ☉). Idealized — not Starship telemetry.'
+            : '進階：速度取教學橢圓上的 vis-viva（μ⊕／μ☉）。理想化——非 Starship 遙測。'}
+        </p>
+      )}
     </div>
   )
 }

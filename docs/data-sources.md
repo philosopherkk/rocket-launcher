@@ -59,7 +59,8 @@ True 1:1 Starship (~120 m class) vs Earth (~12,742 km diameter) cannot be viewed
 | Mode | What is true-scale | What is not |
 | --- | --- | --- |
 | **Planet scale** | Body radii relative to each other; cislunar distances in Earth radii (R⊕); heliocentric orbital distances in AU | Vehicle is a **marker glyph** only — never a giant rocket on Earth |
-| **Vehicle scale** | When away from Earth: Starship / Super Heavy silhouette at public ratios (9 m Ø; ~52 / ~72 / ~124 m). When Earth is in frame: **marker on the limb** + **vehicle inset** at public proportions | Earth backdrop is for curvature / altitude class — stack is never drawn cartoon-huge vs R⊕ (true 124 m / 6,371 km ≈ 2×10⁻⁵) |
+| **Moon / cislunar (unified)** | **True km scene**: Earth R = 6,371 km, Moon distance = 384,400 km, stack height = 0.124 km. Camera stand-off is log-mapped ~0.05 km → ~1.2×10⁶ km | At cislunar distances the rocket is a point (correct). Zoom in near pad/ascent to resolve the vehicle. Drag orbits the camera; Reset view restores phase auto-framing |
+| **Heliocentric destinations** | Orbital distances in AU; body radii ×1800 (disclosed) | Vehicle is a transfer marker |
 
 ### Mean values used (`src/data/astroConstants.ts`)
 

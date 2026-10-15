@@ -277,19 +277,41 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-height: 420px;
+  min-height: 0;
 }
 
 .canvas-wrap {
   position: relative;
-  flex: 1;
-  min-height: 420px;
-  height: min(58vh, 640px);
+  flex: 0 0 auto;
+  width: 100%;
+  height: min(58vh, 560px);
+  max-height: 560px;
+  min-height: 360px;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
   background: #050814;
+  cursor: grab;
+  touch-action: none;
+}
+
+/* R3F root must fill the wrap — never grow it */
+.canvas-wrap > div:first-child {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.canvas-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.canvas-wrap:active {
+  cursor: grabbing;
 }
 
 .vehicle-inset {
@@ -394,6 +416,11 @@ body {
 .viewer-btn-play.is-playing {
   background: linear-gradient(120deg, #f0a35e, #e07a3a);
   color: #1a0c04;
+}
+
+.viewer-btn.is-user-cam {
+  border-color: rgba(240, 163, 94, 0.55);
+  color: var(--accent-2);
 }
 
 .viewer-btn-quiet {
@@ -864,8 +891,9 @@ body {
   }
 
   .canvas-wrap {
-    min-height: 320px;
-    height: 48vh;
+    min-height: 300px;
+    height: min(48vh, 420px);
+    max-height: 420px;
   }
 
   .vehicle-panel {

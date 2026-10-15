@@ -80,7 +80,11 @@ const ui = {
     scrollZoomHint: 'Scroll on canvas to zoom',
     vehicleInset: 'Vehicle inset (public proportions)',
     vehicleInsetNote:
-      'Main view: marker on Earth (stack ≪ R⊕). Inset shows Starship/Super Heavy at published ratios.',
+      'True km scale: stack 124 m vs Earth R 6,371 km. Zoom in to see the vehicle; zoom out to cislunar.',
+    resetView: 'Reset view',
+    orbitHint: 'Drag to orbit · scroll to zoom · Reset view for auto framing',
+    measCamera: 'Camera stand-off',
+    trueKmScale: 'True km scale (1 unit = 1 km)',
   },
   'zh-Hant': {
     brand: 'Starship 目的地實驗室',
@@ -160,7 +164,11 @@ const ui = {
     scrollZoomHint: '在畫布上滾動以縮放',
     vehicleInset: '載具插圖（公開比例）',
     vehicleInsetNote:
-      '主視圖：地球上的標記（全箭 ≪ R⊕）。插圖顯示公開比例的 Starship／Super Heavy。',
+      '真實公里比例：全箭 124 m 對地球半徑 6,371 km。放大可見載具；縮小可見地月空間。',
+    resetView: '重設視角',
+    orbitHint: '拖曳環視 · 滾動縮放 · 重設視角恢復自動構圖',
+    measCamera: '相機距離',
+    trueKmScale: '真實公里比例（1 單位 = 1 公里）',
   },
 } as const
 

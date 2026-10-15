@@ -5,6 +5,7 @@ import {
   HELIO_BODY_EXAGGERATION,
   MOON_DISTANCE_EARTH_RADII,
   MOON_DISTANCE_KM,
+  STACK_HEIGHT_M,
   resolveScaleMode,
   type ScaleMode,
 } from '../data/astroConstants'
@@ -14,6 +15,7 @@ import {
   isCislunar,
   samplePath,
 } from '../lib/transferGeometry'
+import { formatAltitudeScale, formatCameraDistance, STACK_KM } from '../lib/kmCamera'
 import { t } from '../data/i18n'
 
 type Props = {
@@ -22,6 +24,7 @@ type Props = {
   destinationId: DestinationId
   progress: number
   scaleMode: ScaleMode
+  cameraKm?: number
 }
 
 export function MeasurementHud({
@@ -30,6 +33,7 @@ export function MeasurementHud({
   destinationId,
   progress,
   scaleMode,
+  cameraKm,
 }: Props) {
   const resolved = resolveScaleMode(scaleMode, progress)
   const sample = samplePath(progress, destinationId)
@@ -39,51 +43,56 @@ export function MeasurementHud({
     <div className="measure-hud" aria-live="polite">
       <div className="measure-mode">
         <span className="mode-pill">
-          {resolved === 'planet' ? t(locale, 'scalePlanetActive') : t(locale, 'scaleVehicleActive')}
+          {cislunar ? t(locale, 'trueKmScale') : resolved === 'planet' ? t(locale, 'scalePlanetActive') : t(locale, 'scaleVehicleActive')}
         </span>
-        {scaleMode === 'auto' && <span className="mode-auto">{t(locale, 'scaleAutoHint')}</span>}
+        {scaleMode === 'auto' && !cislunar && (
+          <span className="mode-auto">{t(locale, 'scaleAutoHint')}</span>
+        )}
       </div>
 
-      {resolved === 'planet' && (
+      {cislunar && (
         <>
           <div className="scale-bar" title={t(locale, 'scaleBarHint')}>
             <div className="scale-bar-track" />
             <span>
-              {cislunar
-                ? locale === 'en'
-                  ? `Scale bar ≈ ${EARTH_RADIUS_KM.toLocaleString()} km (1 R⊕)`
-                  : `比例尺 ≈ ${EARTH_RADIUS_KM.toLocaleString()} 公里（1 R⊕）`
-                : locale === 'en'
-                  ? 'Distances: 1 unit = 1 AU · body radii exaggerated'
-                  : '距離：1 單位 = 1 AU · 天體半徑已放大'}
+              {locale === 'en'
+                ? `Stack ${STACK_HEIGHT_M} m (${STACK_KM} km) · Earth R ${EARTH_RADIUS_KM.toLocaleString()} km · Moon ${MOON_DISTANCE_KM.toLocaleString()} km`
+                : `全箭 ${STACK_HEIGHT_M} m（${STACK_KM} km）· 地球 R ${EARTH_RADIUS_KM.toLocaleString()} km · 月球 ${MOON_DISTANCE_KM.toLocaleString()} km`}
             </span>
           </div>
-          {!cislunar && (
-            <p className="scale-exag">
-              {locale === 'en'
-                ? `Planet spheres ×${HELIO_BODY_EXAGGERATION} so they stay visible; orbital distances are true AU.`
-                : `行星球體放大 ${HELIO_BODY_EXAGGERATION} 倍以便可見；軌道距離為真實 AU。`}
-            </p>
-          )}
-          {cislunar && (
-            <p className="scale-exag">
-              {locale === 'en'
-                ? `Earth–Moon distance ${MOON_DISTANCE_KM.toLocaleString()} km ≈ ${MOON_DISTANCE_EARTH_RADII.toFixed(1)} R⊕ (mean). Vehicle is a marker only.`
-                : `地月距離 ${MOON_DISTANCE_KM.toLocaleString()} 公里 ≈ ${MOON_DISTANCE_EARTH_RADII.toFixed(1)} R⊕（平均）。載具僅為標記。`}
-            </p>
-          )}
+          <p className="scale-exag">
+            {locale === 'en'
+              ? `True ratio stack/R⊕ ≈ ${(STACK_HEIGHT_M / (EARTH_RADIUS_KM * 1000)).toExponential(1)}. Zoom in near pad to see the vehicle; at cislunar distances it is a point — that is correct.`
+              : `真實比例 全箭/R⊕ ≈ ${(STACK_HEIGHT_M / (EARTH_RADIUS_KM * 1000)).toExponential(1)}。發射台附近放大可見載具；地月距離時為一點——這是正確的。`}
+          </p>
         </>
       )}
 
-      {resolved === 'vehicle' && (
-        <p className="scale-exag">
-          {locale === 'en'
-            ? t(locale, 'vehicleInsetNote')
-            : t(locale, 'vehicleInsetNote')}
-        </p>
+      {!cislunar && resolved === 'planet' && (
+        <>
+          <div className="scale-bar" title={t(locale, 'scaleBarHint')}>
+            <div className="scale-bar-track" />
+            <span>
+              {locale === 'en'
+                ? 'Distances: 1 unit = 1 AU · body radii exaggerated'
+                : '距離：1 單位 = 1 AU · 天體半徑已放大'}
+            </span>
+          </div>
+          <p className="scale-exag">
+            {locale === 'en'
+              ? `Planet spheres ×${HELIO_BODY_EXAGGERATION}; orbital distances true AU.`
+              : `行星球體 ×${HELIO_BODY_EXAGGERATION}；軌道距離為真實 AU。`}
+          </p>
+        </>
       )}
 
       <dl className="measure-grid">
+        {cameraKm != null && (
+          <div>
+            <dt>{t(locale, 'measCamera')}</dt>
+            <dd>{formatCameraDistance(cameraKm, locale)}</dd>
+          </div>
+        )}
         <div>
           <dt>{t(locale, 'measSegment')}</dt>
           <dd>{sample.label}</dd>
@@ -91,7 +100,7 @@ export function MeasurementHud({
         {sample.altitudeKm != null && (
           <div>
             <dt>{t(locale, 'measAltitude')}</dt>
-            <dd>{formatKm(sample.altitudeKm, locale)}</dd>
+            <dd>{formatAltitudeScale(sample.altitudeKm, locale)}</dd>
           </div>
         )}
         {sample.heliocentricAu != null && (
@@ -133,15 +142,14 @@ export function MeasurementHud({
             </dd>
           </div>
         )}
+        {cislunar && difficulty === 'advanced' && (
+          <div>
+            <dt>Earth–Moon</dt>
+            <dd>{MOON_DISTANCE_EARTH_RADII.toFixed(1)} R⊕</dd>
+          </div>
+        )}
       </dl>
       <p className="measure-note">{locale === 'en' ? sample.noteEn : sample.noteZh}</p>
-      {difficulty === 'advanced' && (
-        <p className="measure-note">
-          {locale === 'en'
-            ? 'Advanced: speeds use vis-viva on the teaching ellipse (μ⊕ / μ☉). Idealized — not Starship telemetry.'
-            : '進階：速度取教學橢圓上的 vis-viva（μ⊕／μ☉）。理想化——非 Starship 遙測。'}
-        </p>
-      )}
     </div>
   )
 }

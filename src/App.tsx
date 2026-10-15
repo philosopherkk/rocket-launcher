@@ -1,18 +1,25 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { AtmospherePanel } from './components/AtmospherePanel'
 import { Controls } from './components/Controls'
 import { DestinationPanel } from './components/DestinationPanel'
 import { MeasurementHud } from './components/MeasurementHud'
-import { MissionScene } from './components/MissionScene'
+import { MissionScene, type CameraOrbit } from './components/MissionScene'
 import { PhasePanel } from './components/PhasePanel'
 import { Timeline } from './components/Timeline'
-import { VehicleInset } from './components/VehicleInset'
 import { VehiclePanel } from './components/VehiclePanel'
-import { clampZoom, ViewerBar, ZOOM_STEP } from './components/ViewerBar'
-import { resolveScaleMode } from './data/astroConstants'
+import { ViewerBar } from './components/ViewerBar'
+import {
+  autoDistanceKm,
+  clampLogDist,
+  kmToLogDist,
+  LOG_DIST_STEP,
+  logDistToKm,
+} from './lib/kmCamera'
 import { t } from './data/i18n'
 import { useMissionState } from './hooks/useMissionState'
-import { vehiclePose } from './lib/vehiclePath'
+import { isCislunar } from './lib/transferGeometry'
+
+const DEFAULT_ORBIT: CameraOrbit = { yaw: 0.85, pitch: 0.38 }
 
 export default function App() {
   const {
@@ -33,49 +40,104 @@ export default function App() {
   } = useMissionState()
 
   const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null)
-  const stageRef = useRef<HTMLDivElement | null>(null)
-  const [zoomLevel, setZoomLevel] = useState(0)
+  const [logDist, setLogDist] = useState(() => kmToLogDist(autoDistanceKm(0)))
+  const [orbit, setOrbit] = useState<CameraOrbit>(DEFAULT_ORBIT)
+  const [userCamera, setUserCamera] = useState(false)
+  const [cameraKm, setCameraKm] = useState(1)
+  const dragRef = useRef<{ x: number; y: number; button: number } | null>(null)
 
   const setStage = useCallback((node: HTMLDivElement | null) => {
-    stageRef.current = node
     setStageEl(node)
   }, [])
 
-  const zoomIn = useCallback(
-    () => setZoomLevel((z) => clampZoom(z + ZOOM_STEP)),
-    [],
-  )
-  const zoomOut = useCallback(
-    () => setZoomLevel((z) => clampZoom(z - ZOOM_STEP)),
-    [],
-  )
-  const zoomReset = useCallback(() => setZoomLevel(0), [])
+  // Auto stand-off follows mission phase until the user takes over
+  useEffect(() => {
+    if (userCamera) return
+    setLogDist(kmToLogDist(autoDistanceKm(progress)))
+  }, [progress, userCamera])
 
-  // Smooth scroll / trackpad zoom on the 3D canvas (not on HUD controls)
+  const zoomIn = useCallback(() => {
+    setUserCamera(true)
+    setLogDist((z) => clampLogDist(z - LOG_DIST_STEP))
+  }, [])
+  const zoomOut = useCallback(() => {
+    setUserCamera(true)
+    setLogDist((z) => clampLogDist(z + LOG_DIST_STEP))
+  }, [])
+  const resetView = useCallback(() => {
+    setUserCamera(false)
+    setOrbit(DEFAULT_ORBIT)
+    setLogDist(kmToLogDist(autoDistanceKm(progress)))
+  }, [progress])
+
+  // Wheel zoom (exponential via log10 km)
   useEffect(() => {
     const el = stageEl
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement | null
-      if (target?.closest('.viewer-bar, .measure-hud, .vehicle-inset, button, select, input')) {
-        return
-      }
+      if (target?.closest('.viewer-bar, .measure-hud, button, select, input, a')) return
       e.preventDefault()
-      // deltaY > 0 → zoom out (increase stand-off)
-      const sensitivity = e.deltaMode === 1 ? 0.12 : 0.0018
-      setZoomLevel((z) => clampZoom(z - e.deltaY * sensitivity))
+      setUserCamera(true)
+      const sensitivity = e.deltaMode === 1 ? 0.08 : 0.0012
+      setLogDist((z) => clampLogDist(z + e.deltaY * sensitivity))
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
   }, [stageEl])
 
+  // Orbit drag (LMB) / pan pitch-yaw with Shift or RMB
+  useEffect(() => {
+    const el = stageEl
+    if (!el) return
+
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target?.closest('.viewer-bar, .measure-hud, button, select, input, a')) return
+      if (e.button !== 0 && e.button !== 2) return
+      dragRef.current = { x: e.clientX, y: e.clientY, button: e.button }
+      el.setPointerCapture(e.pointerId)
+    }
+    const onMove = (e: PointerEvent) => {
+      if (!dragRef.current) return
+      const dx = e.clientX - dragRef.current.x
+      const dy = e.clientY - dragRef.current.y
+      dragRef.current = { x: e.clientX, y: e.clientY, button: dragRef.current.button }
+      setUserCamera(true)
+      const pan = dragRef.current.button === 2 || e.shiftKey
+      setOrbit((o) => {
+        const yaw = o.yaw - dx * 0.005
+        const pitch = Math.min(1.2, Math.max(-0.2, o.pitch + dy * (pan ? 0.003 : 0.004)))
+        return { yaw, pitch }
+      })
+    }
+    const onUp = (e: PointerEvent) => {
+      dragRef.current = null
+      try {
+        el.releasePointerCapture(e.pointerId)
+      } catch {
+        /* ignore */
+      }
+    }
+    const onCtx = (e: Event) => e.preventDefault()
+
+    el.addEventListener('pointerdown', onDown)
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerup', onUp)
+    el.addEventListener('pointercancel', onUp)
+    el.addEventListener('contextmenu', onCtx)
+    return () => {
+      el.removeEventListener('pointerdown', onDown)
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerup', onUp)
+      el.removeEventListener('pointercancel', onUp)
+      el.removeEventListener('contextmenu', onCtx)
+    }
+  }, [stageEl])
+
   useEffect(() => {
     document.documentElement.lang = locale === 'zh-Hant' ? 'zh-Hant' : 'en'
   }, [locale])
-
-  const resolvedScale = resolveScaleMode(scaleMode, progress)
-  const pose = useMemo(() => vehiclePose(progress, destinationId), [progress, destinationId])
-  const showInset = resolvedScale === 'vehicle' && pose.nearEarth
 
   return (
     <div className="app" data-locale={locale}>
@@ -101,7 +163,10 @@ export default function App() {
         onDestination={setDestinationId}
       />
 
-      <p className="compare-hint">{t(locale, 'compareHint')}</p>
+      <p className="compare-hint">
+        {t(locale, 'compareHint')}
+        {isCislunar(destinationId) ? ` · ${t(locale, 'orbitHint')}` : ''}
+      </p>
 
       <main className="layout">
         <div className="stage">
@@ -111,24 +176,23 @@ export default function App() {
                 progress={progress}
                 destinationId={destinationId}
                 scaleMode={scaleMode}
-                zoomLevel={zoomLevel}
+                logDist={logDist}
+                orbit={orbit}
+                userCamera={userCamera}
+                onCameraKm={setCameraKm}
               />
             </Suspense>
             <ViewerBar
               locale={locale}
               playing={playing}
-              zoomLevel={zoomLevel}
+              logDist={logDist}
+              userCamera={userCamera}
+              cameraKm={cameraKm || logDistToKm(logDist)}
               fullscreenTarget={stageEl}
               onTogglePlay={togglePlay}
               onZoomIn={zoomIn}
               onZoomOut={zoomOut}
-              onZoomReset={zoomReset}
-            />
-            <VehicleInset
-              locale={locale}
-              shipOnly={pose.shipOnly || !!pose.booster}
-              plume={pose.plume}
-              visible={showInset}
+              onResetView={resetView}
             />
             <MeasurementHud
               locale={locale}
@@ -136,6 +200,7 @@ export default function App() {
               destinationId={destinationId}
               progress={progress}
               scaleMode={scaleMode}
+              cameraKm={cameraKm || logDistToKm(logDist)}
             />
           </div>
           <Timeline

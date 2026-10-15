@@ -1,41 +1,47 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Locale } from '../data/phases'
 import { t } from '../data/i18n'
+import {
+  clampLogDist,
+  LOG_DIST_MAX,
+  LOG_DIST_MIN,
+  LOG_DIST_STEP,
+  logDistToKm,
+  formatCameraDistance,
+} from '../lib/kmCamera'
 
-/** Continuous zoom range (buttons step; wheel scrolls smoothly) */
-export const ZOOM_MIN = -3
-export const ZOOM_MAX = 3
-export const ZOOM_STEP = 0.5
+export { clampLogDist, LOG_DIST_STEP, logDistToKm }
+export const ZOOM_STEP = LOG_DIST_STEP
 
-/** Multiplier applied to camera stand-off distance: zoomIn → smaller distance */
+/** @deprecated kept for any residual imports — prefer logDist */
 export function zoomDistanceFactor(zoomLevel: number): number {
   return Math.pow(1.28, -zoomLevel)
-}
-
-export function clampZoom(z: number): number {
-  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z))
 }
 
 type Props = {
   locale: Locale
   playing: boolean
-  zoomLevel: number
+  logDist: number
+  userCamera: boolean
+  cameraKm: number
   fullscreenTarget: HTMLElement | null
   onTogglePlay: () => void
   onZoomIn: () => void
   onZoomOut: () => void
-  onZoomReset: () => void
+  onResetView: () => void
 }
 
 export function ViewerBar({
   locale,
   playing,
-  zoomLevel,
+  logDist,
+  userCamera,
+  cameraKm,
   fullscreenTarget,
   onTogglePlay,
   onZoomIn,
   onZoomOut,
-  onZoomReset,
+  onResetView,
 }: Props) {
   const [fullscreen, setFullscreen] = useState(false)
 
@@ -57,7 +63,7 @@ export function ViewerBar({
         await fullscreenTarget.requestFullscreen()
       }
     } catch {
-      // Fullscreen may be blocked by the browser; ignore.
+      /* ignore */
     }
   }, [fullscreenTarget])
 
@@ -73,10 +79,6 @@ export function ViewerBar({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onTogglePlay])
-
-  const zoomLabel = Number.isInteger(zoomLevel)
-    ? String(zoomLevel)
-    : zoomLevel.toFixed(1)
 
   return (
     <div className="viewer-bar" role="toolbar" aria-label={t(locale, 'viewerBar')}>
@@ -99,7 +101,7 @@ export function ViewerBar({
           type="button"
           className="viewer-btn"
           onClick={onZoomOut}
-          disabled={zoomLevel <= ZOOM_MIN}
+          disabled={logDist >= LOG_DIST_MAX - 1e-6}
           aria-label={t(locale, 'zoomOut')}
           title={t(locale, 'zoomOut')}
         >
@@ -111,17 +113,17 @@ export function ViewerBar({
         <button
           type="button"
           className="viewer-btn viewer-btn-quiet"
-          onClick={onZoomReset}
-          aria-label={t(locale, 'zoomReset')}
-          title={`${t(locale, 'zoomReset')} · ${t(locale, 'scrollZoomHint')}`}
+          onClick={onResetView}
+          aria-label={t(locale, 'resetView')}
+          title={t(locale, 'resetView')}
         >
-          {t(locale, 'zoomLevel').replace('{n}', zoomLabel)}
+          {formatCameraDistance(cameraKm || logDistToKm(logDist), locale)}
         </button>
         <button
           type="button"
           className="viewer-btn"
           onClick={onZoomIn}
-          disabled={zoomLevel >= ZOOM_MAX}
+          disabled={logDist <= LOG_DIST_MIN + 1e-6}
           aria-label={t(locale, 'zoomIn')}
           title={t(locale, 'zoomIn')}
         >
@@ -131,6 +133,19 @@ export function ViewerBar({
           <span className="viewer-btn-label">{t(locale, 'zoomIn')}</span>
         </button>
       </div>
+
+      <button
+        type="button"
+        className={`viewer-btn${userCamera ? ' is-user-cam' : ''}`}
+        onClick={onResetView}
+        aria-label={t(locale, 'resetView')}
+        title={t(locale, 'orbitHint')}
+      >
+        <span className="viewer-icon" aria-hidden>
+          ↻
+        </span>
+        <span>{t(locale, 'resetView')}</span>
+      </button>
 
       <button
         type="button"

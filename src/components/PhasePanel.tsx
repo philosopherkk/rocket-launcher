@@ -1,6 +1,6 @@
 import type { DestinationId } from '../data/destinations'
 import { resolvePhaseCopy } from '../data/phaseOverlays'
-import type { Difficulty, Locale, MissionPhase } from '../data/phases'
+import { isPhaseApplicable, phases, type Difficulty, type Locale, type MissionPhase } from '../data/phases'
 import { t } from '../data/i18n'
 
 type Props = {
@@ -14,11 +14,13 @@ type Props = {
 export function PhasePanel({ locale, difficulty, phase, phaseIndex, destinationId }: Props) {
   const base = phase.copy[locale][difficulty]
   const copy = resolvePhaseCopy(phase.id, base, destinationId, locale, difficulty)
+  const activeCount = phases.filter((p) => isPhaseApplicable(destinationId, p.id)).length
   return (
     <section className="phase-panel" aria-live="polite">
       <header>
         <p className="eyebrow">
-          {t(locale, 'phase')} {phaseIndex + 1} / 8
+          {t(locale, 'phase')} {phaseIndex + 1} / {activeCount}
+          {!isPhaseApplicable(destinationId, phase.id) ? ` (${t(locale, 'phaseNotModeled')})` : ''}
         </p>
         <h2>{copy.title}</h2>
         <p className="duration">

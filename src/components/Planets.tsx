@@ -12,15 +12,15 @@ import {
   makePlanetTexture,
 } from '../lib/textures'
 
-export function EarthGlobe() {
+export function EarthGlobe({ progress = 0 }: { progress?: number }) {
   const pos = earthPos()
   const R = VEHICLE_EARTH_RADIUS
   const map = useMemo(() => makeEarthTexture(768), [])
   const clouds = useMemo(() => makeCloudTexture(512), [])
   const group = useRef<THREE.Group>(null)
 
-  useFrame((_, dt) => {
-    if (group.current) group.current.rotation.y += dt * 0.015
+  useFrame(() => {
+    if (group.current) group.current.rotation.y = progress * Math.PI * 0.12
   })
 
   return (
@@ -113,8 +113,8 @@ export function TargetPlanet({ destinationId }: { destinationId: DestinationId }
       )}
       {destinationId === 'jupiter' && (
         <mesh rotation={[Math.PI / 2.6, 0.2, 0.1]}>
-          <torusGeometry args={[radius * 1.65, 0.035, 8, 64]} />
-          <meshStandardMaterial color="#e8d4a8" transparent opacity={0.4} roughness={0.8} />
+          <torusGeometry args={[radius * 1.65, 0.012, 6, 48]} />
+          <meshStandardMaterial color="#c8c0b0" transparent opacity={0.06} roughness={0.95} />
         </mesh>
       )}
     </group>

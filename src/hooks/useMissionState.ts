@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { Difficulty, Locale } from '../data/phases'
 import { phaseAtProgress, phaseIndexAtProgress } from '../data/phases'
 import { destinationIds, type DestinationId } from '../data/destinations'
@@ -11,7 +11,11 @@ import {
   nextPlaybackRate,
 } from '../lib/playback'
 
-const STORAGE_KEY = 'moon-mission-prefs'
+const STORAGE_KEY = 'rocket-launcher-prefs'
+const LEGACY_STORAGE_KEY = 'moon-mission-prefs'
+
+const HUD_SYNC_INTERVAL_MS = 100
+const MAX_DT_S = 0.1
 
 type Prefs = {
   locale: Locale
@@ -23,7 +27,14 @@ type Prefs = {
 
 function loadPrefs(): Prefs {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    let raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) {
+      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+      if (legacy) {
+        raw = legacy
+        localStorage.setItem(STORAGE_KEY, legacy)
+      }
+    }
     if (!raw) {
       return { locale: 'en', difficulty: 'beginner', destinationId: 'moon', scaleMode: 'auto' }
     }
@@ -55,6 +66,38 @@ function loadPrefs(): Prefs {
   }
 }
 
+function localeFromNavigator(): Locale {
+  try {
+    const langs = navigator.languages?.length ? navigator.languages : [navigator.language]
+    for (const lang of langs) {
+      if (lang.toLowerCase().startsWith('zh')) return 'zh-Hant'
+    }
+  } catch {
+    /* ignore */
+  }
+  return 'en'
+}
+
+function prefsFromUrl(): Partial<Prefs> {
+  try {
+    const q = new URLSearchParams(window.location.search)
+    const out: Partial<Prefs> = {}
+    const dest = q.get('dest')
+    if (dest && destinationIds.includes(dest as DestinationId)) {
+      out.destinationId = dest as DestinationId
+    }
+    const lang = q.get('lang')
+    if (lang === 'zh-Hant' || lang === 'en') out.locale = lang
+    const level = q.get('level')
+    if (level === 'beginner' || level === 'intermediate' || level === 'advanced') {
+      out.difficulty = level
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
 function progressFromUrl(): number | null {
   try {
     const raw = new URLSearchParams(window.location.search).get('progress')
@@ -67,22 +110,67 @@ function progressFromUrl(): number | null {
   }
 }
 
-export function useMissionState() {
-  const prefs = loadPrefs()
-  const [locale, setLocale] = useState<Locale>(prefs.locale)
-  const [difficulty, setDifficulty] = useState<Difficulty>(prefs.difficulty)
-  const [destinationId, setDestinationId] = useState<DestinationId>(prefs.destinationId)
-  const [scaleMode, setScaleMode] = useState<ScaleMode>(prefs.scaleMode)
-  const [progress, setProgress] = useState(0)
+export type MissionState = {
+  locale: Locale
+  setLocale: (l: Locale) => void
+  difficulty: Difficulty
+  setDifficulty: (d: Difficulty) => void
+  destinationId: DestinationId
+  setDestinationId: (id: DestinationId) => void
+  scaleMode: ScaleMode
+  setScaleMode: (m: ScaleMode) => void
+  /** Throttled UI progress (~10 Hz during playback) */
+  progress: number
+  setProgress: (p: number) => void
+  /** Authoritative playhead for Canvas / useFrame */
+  progressRef: RefObject<number>
+  playing: boolean
+  setPlaying: (p: boolean) => void
+  togglePlay: () => void
+  playbackRate: PlaybackRate
+  setPlaybackRate: (r: PlaybackRate) => void
+  cyclePlaybackRate: () => void
+  phase: ReturnType<typeof phaseAtProgress>
+  phaseIndex: number
+  resetPrefs: () => void
+}
+
+export function useMissionState(): MissionState {
+  const [locale, setLocale] = useState<Locale>(() => {
+    const url = prefsFromUrl().locale
+    if (url) return url
+    const stored = loadPrefs().locale
+    if (stored !== 'en') return stored
+    return localeFromNavigator()
+  })
+  const [difficulty, setDifficulty] = useState<Difficulty>(
+    () => prefsFromUrl().difficulty ?? loadPrefs().difficulty,
+  )
+  const [destinationId, setDestinationId] = useState<DestinationId>(
+    () => prefsFromUrl().destinationId ?? loadPrefs().destinationId,
+  )
+  const [scaleMode, setScaleMode] = useState<ScaleMode>(() => loadPrefs().scaleMode)
+  const [progress, setProgressState] = useState(0)
+  const progressRef = useRef(0)
   const [playing, setPlaying] = useState(false)
   const [playbackRate, setPlaybackRate] = useState<PlaybackRate>(
-    prefs.playbackRate ?? DEFAULT_PLAYBACK_RATE,
+    () => loadPrefs().playbackRate ?? DEFAULT_PLAYBACK_RATE,
   )
   const rafRef = useRef<number | null>(null)
   const lastRef = useRef<number | null>(null)
+  const lastHudSyncRef = useRef(0)
   const prevDestination = useRef<DestinationId | null>(null)
   const rateRef = useRef(playbackRate)
+  const playingRef = useRef(playing)
   rateRef.current = playbackRate
+  playingRef.current = playing
+
+  const setProgress = useCallback((p: number) => {
+    const clamped = Math.min(1, Math.max(0, p))
+    progressRef.current = clamped
+    setProgressState(clamped)
+    lastHudSyncRef.current = performance.now()
+  }, [])
 
   useEffect(() => {
     localStorage.setItem(
@@ -91,7 +179,6 @@ export function useMissionState() {
     )
   }, [locale, difficulty, destinationId, scaleMode, playbackRate])
 
-  // Apply ?progress= on load / address-bar changes (full navigation)
   useEffect(() => {
     const apply = () => {
       const p = progressFromUrl()
@@ -99,13 +186,16 @@ export function useMissionState() {
         setPlaying(false)
         setProgress(p)
       }
+      const urlPrefs = prefsFromUrl()
+      if (urlPrefs.locale) setLocale(urlPrefs.locale)
+      if (urlPrefs.difficulty) setDifficulty(urlPrefs.difficulty)
+      if (urlPrefs.destinationId) setDestinationId(urlPrefs.destinationId)
     }
     apply()
     window.addEventListener('popstate', apply)
     return () => window.removeEventListener('popstate', apply)
-  }, [])
+  }, [setProgress])
 
-  // Reset playhead when destination changes after initial mount
   useEffect(() => {
     if (prevDestination.current == null) {
       prevDestination.current = destinationId
@@ -116,7 +206,7 @@ export function useMissionState() {
       setPlaying(false)
       setProgress(0)
     }
-  }, [destinationId])
+  }, [destinationId, setProgress])
 
   useEffect(() => {
     if (!playing) {
@@ -127,17 +217,26 @@ export function useMissionState() {
 
     const tick = (now: number) => {
       if (lastRef.current == null) lastRef.current = now
-      const dt = (now - lastRef.current) / 1000
+      let dt = (now - lastRef.current) / 1000
       lastRef.current = now
+      if (dt > MAX_DT_S) dt = MAX_DT_S
+
       const rate = rateRef.current
-      setProgress((p) => {
-        const next = p + (dt * rate) / BASE_TIMELINE_SECONDS
-        if (next >= 1) {
-          setPlaying(false)
-          return 1
-        }
-        return next
-      })
+      let next = progressRef.current + (dt * rate) / BASE_TIMELINE_SECONDS
+      if (next >= 1) {
+        next = 1
+        progressRef.current = 1
+        setPlaying(false)
+        setProgressState(1)
+        lastHudSyncRef.current = now
+        return
+      }
+      progressRef.current = next
+
+      if (now - lastHudSyncRef.current >= HUD_SYNC_INTERVAL_MS) {
+        lastHudSyncRef.current = now
+        setProgressState(next)
+      }
       rafRef.current = requestAnimationFrame(tick)
     }
 
@@ -148,18 +247,32 @@ export function useMissionState() {
   }, [playing])
 
   const togglePlay = useCallback(() => {
-    setPlaying((p) => {
-      if (!p && progress >= 1) setProgress(0)
-      return !p
-    })
-  }, [progress])
+    if (!playingRef.current) {
+      if (progressRef.current >= 1) setProgress(0)
+      setPlaying(true)
+    } else {
+      setPlaying(false)
+    }
+  }, [setProgress])
 
   const cyclePlaybackRate = useCallback(() => {
     setPlaybackRate((r) => nextPlaybackRate(r))
   }, [])
 
-  const phase = phaseAtProgress(progress)
-  const phaseIndex = phaseIndexAtProgress(progress)
+  const resetPrefs = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
+    setLocale(localeFromNavigator())
+    setDifficulty('beginner')
+    setDestinationId('moon')
+    setScaleMode('auto')
+    setPlaybackRate(DEFAULT_PLAYBACK_RATE)
+    setPlaying(false)
+    setProgress(0)
+  }, [setProgress])
+
+  const phase = phaseAtProgress(progress, destinationId)
+  const phaseIndex = phaseIndexAtProgress(progress, destinationId)
 
   return {
     locale,
@@ -172,6 +285,7 @@ export function useMissionState() {
     setScaleMode,
     progress,
     setProgress,
+    progressRef,
     playing,
     setPlaying,
     togglePlay,
@@ -180,5 +294,6 @@ export function useMissionState() {
     cyclePlaybackRate,
     phase,
     phaseIndex,
+    resetPrefs,
   }
 }

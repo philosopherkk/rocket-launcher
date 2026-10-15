@@ -3,6 +3,6 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/rocket-launcher/',
+  base: process.env.VITE_BASE ?? '/rocket-launcher/',
   plugins: [react()],
 })

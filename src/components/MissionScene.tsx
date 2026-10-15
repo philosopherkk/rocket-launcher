@@ -1,6 +1,19 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, Line, Stars } from '@react-three/drei'
 import { useMemo, useRef, type RefObject } from 'react'
+
+function isCaptureMode(): boolean {
+  try {
+    return new URLSearchParams(window.location.search).get('capture') === '1'
+  } catch {
+    return false
+  }
+}
+
+function liveProgress(progressRef: RefObject<number>, fallback: number): number {
+  const v = progressRef.current
+  return typeof v === 'number' ? v : fallback
+}
 import * as THREE from 'three'
 import { StarshipModel } from './StarshipModel'
 import type { DestinationId } from '../data/destinations'
@@ -50,6 +63,7 @@ export type CameraOrbit = { yaw: number; pitch: number }
 
 type Props = {
   progress: number
+  progressRef: RefObject<number>
   destinationId: DestinationId
   scaleMode: ScaleMode
   /** log10(stand-off km) for true-scale cislunar; also used as relative zoom for helio */
@@ -97,7 +111,7 @@ function craftKm(progress: number, destinationId: DestinationId): {
   return { position: s.position.clone(), tangent: s.tangent.clone(), altitudeKm: null }
 }
 
-function TrueEarth({ cameraKm }: { cameraKm: number }) {
+function TrueEarth({ cameraKm, progress }: { cameraKm: number; progress: number }) {
   const { maps, phase, showLoadingChip } = useSafeTextures(
     ['textures/earth_day.jpg', 'textures/earth_clouds.jpg'],
     () => [makeEarthTexture(), makeCloudTexture()],
@@ -112,9 +126,10 @@ function TrueEarth({ cameraKm }: { cameraKm: number }) {
     cloudMap.colorSpace = THREE.SRGBColorSpace
     cloudMap.anisotropy = 4
   }, [dayMap, cloudMap])
-  useFrame((_, dt) => {
-    if (g.current) g.current.rotation.y += dt * 0.018
-    if (cloudsRef.current) cloudsRef.current.rotation.y += dt * 0.022
+  useFrame(() => {
+    const spin = progress < 0.08 ? 0 : progress * Math.PI * 0.14
+    if (g.current) g.current.rotation.y = spin
+    if (cloudsRef.current) cloudsRef.current.rotation.y = spin * 1.04
   })
   const chip =
     showLoadingChip
@@ -300,23 +315,27 @@ function CraftTrail({
 
 function CraftAtTrueScale({
   progress,
+  progressRef,
   destinationId,
   cameraKm,
 }: {
   progress: number
+  progressRef: RefObject<number>
   destinationId: DestinationId
   cameraKm: number
 }) {
   const ref = useRef<THREE.Group>(null)
   const detailed = showDetailedShip(cameraKm)
-  const initial = craftKm(progress, destinationId)
-  const pose = vehiclePose(progress, destinationId)
-  const showPad = detailed && progress < 0.12
+  const p0 = liveProgress(progressRef, progress)
+  const initial = craftKm(p0, destinationId)
+  const pose = vehiclePose(p0, destinationId)
+  const showPad = detailed && p0 < 0.12
   const markerR = Math.max(18, Math.min(2_400, cameraKm * 0.0045))
 
   useFrame((_, dt) => {
     if (!ref.current) return
-    const c = craftKm(progress, destinationId)
+    const p = liveProgress(progressRef, progress)
+    const c = craftKm(p, destinationId)
     const err = ref.current.position.distanceTo(c.position)
     const k = err > 500 ? 1 : 1 - Math.exp(-dt * 14)
     ref.current.position.lerp(c.position, k)
@@ -327,7 +346,7 @@ function CraftAtTrueScale({
   return (
     <>
       {showPad && <PadApron normal={initial.position.clone().normalize()} />}
-      <CraftTrail craftRef={ref} cameraKm={cameraKm} enabled={!detailed && progress > 0.08} />
+      <CraftTrail craftRef={ref} cameraKm={cameraKm} enabled={!detailed && p0 > 0.08} />
       <group ref={ref} position={initial.position}>
         {detailed ? (
           <StarshipModel
@@ -375,6 +394,7 @@ function CraftAtTrueScale({
  */
 function CislunarCamera({
   progress,
+  progressRef,
   destinationId,
   logDist,
   orbit,
@@ -382,6 +402,7 @@ function CislunarCamera({
   onCameraKm,
 }: {
   progress: number
+  progressRef: RefObject<number>
   destinationId: DestinationId
   logDist: number
   orbit: CameraOrbit
@@ -396,8 +417,9 @@ function CislunarCamera({
   const booted = useRef(false)
 
   useFrame((_, dt) => {
-    const craft = craftKm(progress, destinationId)
-    const distTarget = userCamera ? logDistToKm(logDist) : autoDistanceKm(progress)
+    const p = liveProgress(progressRef, progress)
+    const craft = craftKm(p, destinationId)
+    const distTarget = userCamera ? logDistToKm(logDist) : autoDistanceKm(p)
     const logTarget = userCamera ? logDist : kmToLogDist(distTarget)
     const blend = 1 - Math.exp(-dt * (userCamera ? 12 : 3.2))
     smoothLog.current += (logTarget - smoothLog.current) * blend
@@ -464,12 +486,12 @@ function CislunarCamera({
     } else {
       // Ascent / LEO / transfer — always track the craft (Earth may fill background)
       focus.copy(craft.position)
-      if (dist > 8_000 && progress < 0.55) {
+      if (dist > 8_000 && p < 0.55) {
         // Slight look-back toward Earth so departure context stays in frame
         const w = Math.min(0.35, (dist - 8_000) / 200_000)
         focus.lerp(new THREE.Vector3(0, 0, 0), w)
       }
-      if (dist > 8_000 && progress >= 0.55 && progress < 0.72) {
+      if (dist > 8_000 && p >= 0.55 && p < 0.72) {
         const moon = new THREE.Vector3(MOON_DIST_KM, 0, 0)
         focus.lerp(moon, 0.25)
       }
@@ -506,8 +528,8 @@ function CislunarCamera({
       else if (dist < 400) persp.fov = 44
       else if (dist < CISLUNAR_FIT_KM) persp.fov = 46
       else persp.fov = 56
-      persp.near = dist < 3 ? 0.01 : Math.max(0.2, dist * 0.0002)
-      persp.far = Math.max(4_000_000, dist * 40 + MOON_DIST_KM * 4)
+      persp.near = Math.max(1e-3, dist * 0.01)
+      persp.far = Math.max(4_000_000, dist * 1e3 + MOON_DIST_KM * 2)
       persp.updateProjectionMatrix()
     }
 
@@ -517,6 +539,7 @@ function CislunarCamera({
 
 function TrueScaleCislunarScene({
   progress,
+  progressRef,
   destinationId,
   logDist,
   orbit,
@@ -524,6 +547,7 @@ function TrueScaleCislunarScene({
   onCameraKm,
 }: {
   progress: number
+  progressRef: RefObject<number>
   destinationId: DestinationId
   logDist: number
   orbit: CameraOrbit
@@ -546,7 +570,7 @@ function TrueScaleCislunarScene({
   return (
     <>
       <Stars radius={2_000_000} depth={400_000} count={5500} factor={5} saturation={0} fade speed={0.08} />
-      <TrueEarth cameraKm={camKm} />
+      <TrueEarth cameraKm={camKm} progress={progress} />
       <TrueMoon cameraKm={camKm} />
       {showPaths && (
         <>
@@ -570,11 +594,13 @@ function TrueScaleCislunarScene({
       )}
       <CraftAtTrueScale
         progress={progress}
+        progressRef={progressRef}
         destinationId={destinationId}
         cameraKm={camKm}
       />
       <CislunarCamera
         progress={progress}
+        progressRef={progressRef}
         destinationId={destinationId}
         logDist={logDist}
         orbit={orbit}
@@ -629,6 +655,7 @@ function autoHelioAu(progress: number, a2: number): number {
 
 function HelioCamera({
   progress,
+  progressRef,
   destinationId,
   logDist,
   orbit,
@@ -636,6 +663,7 @@ function HelioCamera({
   onCameraKm,
 }: {
   progress: number
+  progressRef: RefObject<number>
   destinationId: DestinationId
   logDist: number
   orbit: CameraOrbit
@@ -652,14 +680,15 @@ function HelioCamera({
   }, [logDist])
 
   useFrame((_, dt) => {
-    const s = samplePath(progress, destinationId)
+    const p = liveProgress(progressRef, progress)
+    const s = samplePath(p, destinationId)
     const a2 = targetHelioAu(destinationId)
-    const dist = userCamera ? auDist : autoHelioAu(progress, a2)
+    const dist = userCamera ? auDist : autoHelioAu(p, a2)
     onCameraKm?.(dist * 149_597_870.7)
 
     // Craft-centered; slight bias to transfer midpoint during coast so scale context stays in frame
     const focus = s.position.clone()
-    if (progress >= 0.16 && progress < 0.9) {
+    if (p >= 0.16 && p < 0.9) {
       const frame = helioHohmannFrame(destinationId)
       const mid = transferPosAtNu((frame.nuStart + frame.nuEnd) / 2, frame)
       focus.lerp(mid, 0.22)
@@ -700,6 +729,7 @@ function HelioCamera({
 
 function HelioScene({
   progress,
+  progressRef,
   destinationId,
   logDist,
   orbit,
@@ -707,6 +737,7 @@ function HelioScene({
   onCameraKm,
 }: {
   progress: number
+  progressRef: RefObject<number>
   destinationId: DestinationId
   logDist: number
   orbit: CameraOrbit
@@ -727,7 +758,8 @@ function HelioScene({
 
   useFrame((_, dt) => {
     if (!marker.current) return
-    const s = samplePath(progress, destinationId)
+    const p = liveProgress(progressRef, progress)
+    const s = samplePath(p, destinationId)
     const k = 1 - Math.exp(-dt * 10)
     marker.current.position.lerp(s.position, k)
   })
@@ -784,6 +816,7 @@ function HelioScene({
       </group>
       <HelioCamera
         progress={progress}
+        progressRef={progressRef}
         destinationId={destinationId}
         logDist={logDist}
         orbit={orbit}
@@ -796,7 +829,9 @@ function HelioScene({
 
 function SceneBody({
   progress,
+  progressRef,
   destinationId,
+  scaleMode: _scaleMode,
   logDist,
   orbit,
   userCamera,
@@ -812,6 +847,7 @@ function SceneBody({
           <SunLight />
           <TrueScaleCislunarScene
             progress={progress}
+            progressRef={progressRef}
             destinationId={destinationId}
             logDist={logDist}
             orbit={orbit}
@@ -825,6 +861,7 @@ function SceneBody({
           <HelioSunLight />
           <HelioScene
             progress={progress}
+            progressRef={progressRef}
             destinationId={destinationId}
             logDist={logDist}
             orbit={orbit}
@@ -839,6 +876,7 @@ function SceneBody({
 
 export function MissionScene({
   progress,
+  progressRef,
   destinationId,
   scaleMode,
   logDist,
@@ -847,8 +885,10 @@ export function MissionScene({
   onCameraKm,
 }: Props) {
   const cislunar = isCislunar(destinationId)
+  const capture = isCaptureMode()
   return (
     <Canvas
+      key={cislunar ? 'km' : 'helio'}
       camera={{
         position: cislunar ? [MOON_DIST_KM * 0.5, 180_000, 480_000] : [2, 1.2, 2.5],
         fov: cislunar ? 52 : 42,
@@ -859,8 +899,7 @@ export function MissionScene({
       gl={{
         antialias: true,
         alpha: false,
-        // logarithmicDepthBuffer: unreliable on SwiftShader / some headless GL stacks
-        logarithmicDepthBuffer: false,
+        logarithmicDepthBuffer: !capture,
         powerPreference: 'high-performance',
         toneMapping: THREE.ACESFilmicToneMapping,
         toneMappingExposure: 1.15,
@@ -876,13 +915,13 @@ export function MissionScene({
     >
       <SceneBody
         progress={progress}
+        progressRef={progressRef}
         destinationId={destinationId}
         scaleMode={scaleMode}
         logDist={logDist}
         orbit={orbit}
         userCamera={userCamera}
         onCameraKm={onCameraKm}
-        key={destinationId}
       />
     </Canvas>
   )

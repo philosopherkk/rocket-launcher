@@ -1,3 +1,5 @@
+import type { DestinationId } from './destinations'
+
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 export type Locale = 'en' | 'zh-Hant'
 
@@ -28,6 +30,9 @@ export type MissionPhase = {
   durationLabel: { en: string; 'zh-Hant': string }
   copy: Record<Locale, Record<Difficulty, PhaseCopy>>
 }
+
+/** Phases not modelled on one-way heliocentric scrubbers (return / Earth reentry). */
+const HELIO_INACTIVE: PhaseId[] = ['return', 'reentry']
 
 /**
  * Educational mission profile inspired by publicly described Starship / HLS
@@ -541,15 +546,30 @@ export const phases: MissionPhase[] = [
   },
 ]
 
-export function phaseAtProgress(progress: number): MissionPhase {
-  const p = Math.min(1, Math.max(0, progress))
-  for (const phase of phases) {
-    if (p >= phase.start && p < phase.end) return phase
-  }
-  return phases[phases.length - 1]
+export function isPhaseApplicable(destinationId: DestinationId, phaseId: PhaseId): boolean {
+  if (destinationId === 'moon') return true
+  return !HELIO_INACTIVE.includes(phaseId)
 }
 
-export function phaseIndexAtProgress(progress: number): number {
-  const phase = phaseAtProgress(progress)
+export function phaseAtProgress(progress: number, destinationId: DestinationId = 'moon'): MissionPhase {
+  const p = Math.min(1, Math.max(0, progress))
+  for (const phase of phases) {
+    if (p >= phase.start && p < phase.end) {
+      if (!isPhaseApplicable(destinationId, phase.id)) {
+        const lastActive = [...phases].reverse().find((ph) => isPhaseApplicable(destinationId, ph.id))
+        return lastActive ?? phases[phases.length - 1]
+      }
+      return phase
+    }
+  }
+  const tail = phases[phases.length - 1]
+  if (!isPhaseApplicable(destinationId, tail.id)) {
+    return phases.find((ph) => isPhaseApplicable(destinationId, ph.id)) ?? tail
+  }
+  return tail
+}
+
+export function phaseIndexAtProgress(progress: number, destinationId: DestinationId = 'moon'): number {
+  const phase = phaseAtProgress(progress, destinationId)
   return phases.findIndex((p) => p.id === phase.id)
 }

@@ -37,9 +37,11 @@ export default function App() {
     scaleMode,
     setScaleMode,
     progress,
+    progressRef,
     setProgress,
     playing,
     togglePlay,
+    resetPrefs,
     playbackRate,
     setPlaybackRate,
     cyclePlaybackRate,
@@ -193,6 +195,7 @@ export default function App() {
               >
                 <MissionScene
                   progress={progress}
+                  progressRef={progressRef}
                   destinationId={destinationId}
                   scaleMode={scaleMode}
                   logDist={logDist}
@@ -228,13 +231,16 @@ export default function App() {
           </div>
           <Timeline
             locale={locale}
+            destinationId={destinationId}
             progress={progress}
             playing={playing}
             playbackRate={playbackRate}
             phaseIndex={phaseIndex}
+            phase={phase}
             onProgress={setProgress}
             onTogglePlay={togglePlay}
             onPlaybackRate={setPlaybackRate}
+            onReset={resetPrefs}
           />
         </div>
 

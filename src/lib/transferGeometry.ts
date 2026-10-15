@@ -8,24 +8,21 @@ import {
   HELIO_MEAN_LONG_DEG_J2000,
   KM_PER_AU,
   LEO_RADIUS_KM,
-  MOON_DISTANCE_KM,
   MOON_RADIUS_EARTH,
   MU_SUN_KM3_S2,
   type BodyId,
 } from '../data/astroConstants'
 import type { DestinationId } from '../data/destinations'
 import { hohmannEarthTo } from '../data/orbital'
-import { easeInOutCubic, clamp01 } from './ease'
+import { clamp01 } from './ease'
+import { orbitalPeriodDays } from '../data/orbital'
+import { nuFromMeanAnomalyCoast } from './kepler'
 import { craftKmAt, MOON_TRANSFER, type PathKind } from './craftKm'
 
 const DEG = Math.PI / 180
 
 function polarAu(rAu: number, lonRad: number): THREE.Vector3 {
   return new THREE.Vector3(rAu * Math.cos(lonRad), rAu * Math.sin(lonRad), 0)
-}
-
-function orbitalPeriodDays(aAu: number): number {
-  return 365.25 * Math.pow(aAu, 1.5)
 }
 
 /** Hohmann frame: Earth fixed at J2000 mean longitude; transfer periapsis oriented for one-way coast. */
@@ -89,7 +86,7 @@ export function planetHelioPosition(
     let u = 0
     if (p < 0.08) u = 0
     else if (p < 0.16) u = 0
-    else if (p < 0.9) u = easeInOutCubic((p - 0.16) / 0.74)
+    else if (p < 0.9) u = (p - 0.16) / 0.74
     else u = 1
     const lon = THREE.MathUtils.lerp(frame.LTargetDepart, frame.LArrive, u)
     return polarAu(a, lon)
@@ -291,8 +288,9 @@ function sampleHelio(p: number, destinationId: DestinationId): PathSample {
 
   // 0.16–0.90 whole outbound coast (majority of scrubber)
   if (p < 0.9) {
-    const u = easeInOutCubic((p - 0.16) / 0.74)
-    const nu = THREE.MathUtils.lerp(nuStart + (nuEnd - nuStart) * 0.04, nuEnd, u)
+    const u = (p - 0.16) / 0.74
+    const nuLo = nuStart + (nuEnd - nuStart) * 0.04
+    const nu = nuFromMeanAnomalyCoast(u, nuLo, nuEnd, frame.e)
     const position = transferPosAtNu(nu, frame)
     const rKm = position.length() * KM_PER_AU
     const day = (u * days).toFixed(0)
@@ -418,5 +416,3 @@ export function formatSpeed(v: number, locale: 'en' | 'zh-Hant'): string {
   return locale === 'en' ? `~${v.toFixed(2)} km/s` : `約 ${v.toFixed(2)} km/s`
 }
 
-// Silence unused import when tree-shaken oddly
-void MOON_DISTANCE_KM

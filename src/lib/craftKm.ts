@@ -9,6 +9,7 @@ import {
   MU_EARTH_KM3_S2,
 } from '../data/astroConstants'
 import { easeInOutCubic, clamp01 } from './ease'
+import { nuFromMeanAnomalyCoast } from './kepler'
 
 export type PathKind = 'powered' | 'coast'
 
@@ -183,8 +184,9 @@ export function craftKmAt(progress: number): CraftKmSample {
   }
 
   if (p < 0.62) {
-    const u = easeInOutCubic((p - 0.36) / 0.26)
-    const nu = THREE.MathUtils.lerp(0.06, Math.PI, u)
+    const u = (p - 0.36) / 0.26
+    const { e } = MOON_TRANSFER
+    const nu = nuFromMeanAnomalyCoast(u, 0.06, Math.PI, e)
     const position = transferEllipsePoint(nu)
     const r = position.length()
     if (u > 0.92) {
@@ -231,8 +233,9 @@ export function craftKmAt(progress: number): CraftKmSample {
   }
 
   if (p < 0.86) {
-    const u = easeInOutCubic((p - 0.72) / 0.14)
-    const nu = Math.PI * (1 - u)
+    const u = (p - 0.72) / 0.14
+    const { e } = MOON_TRANSFER
+    const nu = nuFromMeanAnomalyCoast(1 - u, 0.06, Math.PI, e)
     const base = transferEllipsePoint(nu)
     const position = new THREE.Vector3(base.x, -base.y, 0)
     const r = position.length()

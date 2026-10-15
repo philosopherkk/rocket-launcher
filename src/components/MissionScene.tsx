@@ -451,7 +451,7 @@ function SceneBody({ progress, destinationId, scaleMode, zoomLevel = 0 }: Props)
       <color attach="background" args={['#03050c']} />
       <fog
         attach="fog"
-        args={['#03050c', resolved === 'planet' ? 200 : 40, resolved === 'planet' ? 600 : 220]}
+        args={['#03050c', resolved === 'planet' ? 200 : 90, resolved === 'planet' ? 600 : 380]}
       />
       <SunLight />
       {resolved === 'planet' ? (

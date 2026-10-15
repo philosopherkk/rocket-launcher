@@ -45,6 +45,30 @@ export const HELIO_A_AU: Record<'mercury' | 'venus' | 'earth' | 'mars' | 'jupite
   jupiter: 5.203,
 }
 
+/**
+ * Approximate mean longitudes L (degrees) at epoch J2000.0.
+ * Source: JPL SSD — Keplerian Elements for Approximate Positions of the Major Planets
+ * (https://ssd.jpl.nasa.gov/planets/approx_pos.html), L at J2000.
+ * Used as a fixed educational longitude snapshot on circular mean-a orbits —
+ * not a live ephemeris. Prevents the collinear “scale ladder on +x” layout.
+ */
+export const HELIO_MEAN_LONG_DEG_J2000: Record<
+  'mercury' | 'venus' | 'earth' | 'mars' | 'jupiter',
+  number
+> = {
+  mercury: 252.251,
+  venus: 181.98,
+  earth: 100.464,
+  mars: 355.453,
+  jupiter: 34.404,
+}
+
+/** Short citation shown in the HUD for helio longitude assumption */
+export const HELIO_LONGITUDE_ASSUMPTION_EN =
+  'Planet longitudes: J2000 mean L (JPL SSD approx. elements) on circular mean-a orbits; target advances along its orbit from Hohmann departure to arrival. Not a live ephemeris.'
+export const HELIO_LONGITUDE_ASSUMPTION_ZH =
+  '行星經度：J2000 平黃經 L（JPL SSD 近似根數）置於圓形平均半長軸軌道；目標星沿軌道從霍曼出發點移至到達點。非即時星曆。'
+
 export const STACK_HEIGHT_M = 124
 export const SHIP_HEIGHT_M = 52
 export const BOOSTER_HEIGHT_M = 72

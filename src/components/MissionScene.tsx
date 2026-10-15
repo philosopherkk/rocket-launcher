@@ -4,16 +4,20 @@ import { useMemo, useRef, type RefObject } from 'react'
 import * as THREE from 'three'
 import { StarshipModel } from './StarshipModel'
 import type { DestinationId } from '../data/destinations'
-import { HELIO_A_AU, HELIO_BODY_EXAGGERATION, type ScaleMode } from '../data/astroConstants'
+import { HELIO_A_AU, type ScaleMode } from '../data/astroConstants'
 import {
   bodyRadiusScene,
   HELIO_PLANETS,
+  helioHohmannFrame,
   helioMissionPath,
   isCislunar,
+  planetHelioPosition,
   planetOrbitRing,
   samplePath,
   targetHelioAu,
   transferCurvePoints,
+  transferPosAtNu,
+  type HelioPlanetId,
 } from '../lib/transferGeometry'
 import {
   craftKmAt,
@@ -240,11 +244,6 @@ function TrueMoon({ cameraKm }: { cameraKm: number }) {
           <sphereGeometry args={[MOON_R_KM * 5.5, 18, 18]} />
           <meshBasicMaterial color="#d0c8bc" transparent opacity={0.11} depthWrite={false} />
         </mesh>
-      )}
-      {cameraKm > 80_000 && (
-        <Html distanceFactor={50_000} style={{ pointerEvents: 'none' }}>
-          <div className="body-label">Moon</div>
-        </Html>
       )}
     </group>
   )
@@ -543,18 +542,12 @@ function TrueScaleCislunarScene({
   const showPaths = camKm > 60 && camKm < 900_000
   const flownCount = Math.max(2, Math.floor(progress * (mission.points.length - 1)) + 1)
   const flownPts = useMemo(() => mission.points.slice(0, flownCount), [mission.points, flownCount])
-  const seg = craftKmAt(progress)
 
   return (
     <>
       <Stars radius={2_000_000} depth={400_000} count={5500} factor={5} saturation={0} fade speed={0.08} />
       <TrueEarth cameraKm={camKm} />
       <TrueMoon cameraKm={camKm} />
-      {camKm > 60_000 && (
-        <Html position={[0, EARTH_R_KM * 1.8, 0]} distanceFactor={80_000} style={{ pointerEvents: 'none' }}>
-          <div className="body-label">Earth</div>
-        </Html>
-      )}
       {showPaths && (
         <>
           <Line points={leoPts} color="#7dffb3" transparent opacity={0.4} lineWidth={1} />
@@ -573,25 +566,7 @@ function TrueScaleCislunarScene({
           {flownPts.length >= 2 && (
             <Line points={flownPts} color="#9ad8ff" transparent opacity={0.95} lineWidth={2.5} />
           )}
-          {camKm > 20_000 && (
-            <Html
-              position={transferPts[Math.floor(transferPts.length / 2)]}
-              distanceFactor={90_000}
-              style={{ pointerEvents: 'none' }}
-            >
-              <div className="path-label">
-                Transfer ellipse · Earth at focus · peri≈LEO · apo≈Moon
-              </div>
-            </Html>
-          )}
         </>
-      )}
-      {camKm > 5_000 && (
-        <Html position={seg.position.clone().add(new THREE.Vector3(0, camKm * 0.04, 0))} distanceFactor={Math.max(800, camKm * 0.35)} style={{ pointerEvents: 'none' }}>
-          <div className={`path-kind-chip ${seg.kind}`}>
-            {seg.kind === 'powered' ? 'powered' : 'coast'} · {seg.segment}
-          </div>
-        </Html>
       )}
       <CraftAtTrueScale
         progress={progress}
@@ -615,11 +590,9 @@ function TrueScaleCislunarScene({
 function ScaledBody({
   body,
   position,
-  label,
 }: {
   body: 'earth' | 'moon' | 'mars' | 'venus' | 'mercury' | 'jupiter'
   position: THREE.Vector3
-  label?: string
 }) {
   const r = bodyRadiusScene(body, 'helio')
   const map = useMemo(() => {
@@ -636,29 +609,22 @@ function ScaledBody({
         <sphereGeometry args={[r, 48, 48]} />
         <meshStandardMaterial map={map} roughness={0.9} metalness={0.04} />
       </mesh>
-      {label && (
-        <Html distanceFactor={8} style={{ pointerEvents: 'none' }}>
-          <div className="body-label">{label}</div>
-        </Html>
-      )}
     </group>
   )
 }
 
-/** Segment-aware AU stand-off so the craft stays visible from departure through arrival. */
+/** Segment-aware AU stand-off for one-way outbound transit. */
 function autoHelioAu(progress: number, a2: number): number {
   const p = Math.min(1, Math.max(0, progress))
-  // Pull back enough to show the scale ladder of other planets (true AU rings)
-  const span = Math.max(a2, 1.5) * 1.55
-  if (p < 0.08) return Math.max(0.55, span * 0.42)
-  if (p < 0.22) return Math.max(0.5, span * 0.48)
-  if (p < 0.72) {
-    const u = (p - 0.22) / 0.5
-    // Mid-coast: whole transfer + neighboring planet rings in frame
-    return Math.max(0.85, span * (0.55 + u * 0.28))
+  const span = Math.max(a2, 1.5) * 1.7
+  // Pre-depart: pull back so non-collinear planet longitudes are visible
+  if (p < 0.08) return Math.max(1.6, span * 0.85)
+  if (p < 0.16) return Math.max(0.9, span * 0.55)
+  if (p < 0.9) {
+    const u = (p - 0.16) / 0.74
+    return Math.max(1.0, span * (0.55 + u * 0.28))
   }
-  if (p < 0.82) return Math.max(0.6, span * 0.52)
-  return Math.max(0.7, span * 0.58)
+  return Math.max(0.75, span * 0.52)
 }
 
 function HelioCamera({
@@ -693,8 +659,9 @@ function HelioCamera({
 
     // Craft-centered; slight bias to transfer midpoint during coast so scale context stays in frame
     const focus = s.position.clone()
-    if (progress >= 0.22 && progress < 0.72) {
-      const mid = new THREE.Vector3(((1 + a2) / 2) * (a2 > 1 ? 1 : -1), Math.max(a2, 1) * 0.35, 0)
+    if (progress >= 0.16 && progress < 0.9) {
+      const frame = helioHohmannFrame(destinationId)
+      const mid = transferPosAtNu((frame.nuStart + frame.nuEnd) / 2, frame)
       focus.lerp(mid, 0.22)
     }
 
@@ -758,14 +725,6 @@ function HelioScene({
   const flownCount = Math.max(2, Math.floor(progress * (mission.points.length - 1)) + 1)
   const flownPts = useMemo(() => mission.points.slice(0, flownCount), [mission.points, flownCount])
 
-  const planetLabels: Record<string, string> = {
-    mercury: 'Mercury',
-    venus: 'Venus',
-    earth: 'Earth',
-    mars: 'Mars',
-    jupiter: 'Jupiter',
-  }
-
   useFrame((_, dt) => {
     if (!marker.current) return
     const s = samplePath(progress, destinationId)
@@ -781,14 +740,12 @@ function HelioScene({
         <sphereGeometry args={[0.05, 24, 24]} />
         <meshBasicMaterial color="#ffe29a" />
       </mesh>
-      <Html position={[0, 0.12, 0]} distanceFactor={4} style={{ pointerEvents: 'none' }}>
-        <div className="body-label">Sun</div>
-      </Html>
 
-      {/* All planets at true mean heliocentric distance (on +x for scale ladder) + orbit rings */}
+      {/* Planets at true AU radii, J2000 mean longitudes (non-collinear); target moves on Hohmann */}
       {HELIO_PLANETS.map((id) => {
         const a = HELIO_A_AU[id]
         const ring = planetOrbitRing(a, 64)
+        const pos = planetHelioPosition(id as HelioPlanetId, progress, destinationId)
         return (
           <group key={id}>
             <Line
@@ -798,16 +755,12 @@ function HelioScene({
               opacity={id === destinationId ? 0.55 : id === 'earth' ? 0.4 : 0.28}
               lineWidth={1}
             />
-            <ScaledBody
-              body={id}
-              position={new THREE.Vector3(a, 0, 0)}
-              label={`${planetLabels[id]} · ${a} AU`}
-            />
+            <ScaledBody body={id} position={pos} />
           </group>
         )
       })}
 
-      {/* Hohmann guide + powered/coast + flown */}
+      {/* One-way Hohmann guide + powered/coast + flown */}
       <Line points={pathPts} color="#5a7a9a" transparent opacity={0.5} lineWidth={1} />
       {coast.map((pts, i) =>
         pts.length >= 2 ? (
@@ -822,21 +775,6 @@ function HelioScene({
       {flownPts.length >= 2 && (
         <Line points={flownPts} color="#9ad8ff" transparent opacity={0.95} lineWidth={2.5} />
       )}
-
-      <Html position={pathPts[Math.floor(pathPts.length / 2)]} distanceFactor={6} style={{ pointerEvents: 'none' }}>
-        <div className="path-label">
-          Ideal Hohmann · coplanar · distances true AU · bodies ×{HELIO_BODY_EXAGGERATION}
-        </div>
-      </Html>
-      <Html
-        position={sample.position.clone().add(new THREE.Vector3(0, 0.08, 0))}
-        distanceFactor={5}
-        style={{ pointerEvents: 'none' }}
-      >
-        <div className={`path-kind-chip ${sample.kind}`}>
-          {sample.kind} · {sample.label}
-        </div>
-      </Html>
 
       <group ref={marker} position={sample.position}>
         <mesh>

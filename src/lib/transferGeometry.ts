@@ -3,6 +3,9 @@ import {
   EARTH_RADIUS_KM,
   HELIO_A_AU,
   HELIO_BODY_EXAGGERATION,
+  HELIO_LONGITUDE_ASSUMPTION_EN,
+  HELIO_LONGITUDE_ASSUMPTION_ZH,
+  HELIO_MEAN_LONG_DEG_J2000,
   KM_PER_AU,
   LEO_RADIUS_KM,
   MOON_DISTANCE_KM,
@@ -14,6 +17,85 @@ import type { DestinationId } from '../data/destinations'
 import { hohmannEarthTo } from '../data/orbital'
 import { easeInOutCubic, clamp01 } from './ease'
 import { craftKmAt, MOON_TRANSFER, type PathKind } from './craftKm'
+
+const DEG = Math.PI / 180
+
+function polarAu(rAu: number, lonRad: number): THREE.Vector3 {
+  return new THREE.Vector3(rAu * Math.cos(lonRad), rAu * Math.sin(lonRad), 0)
+}
+
+function orbitalPeriodDays(aAu: number): number {
+  return 365.25 * Math.pow(aAu, 1.5)
+}
+
+/** Hohmann frame: Earth fixed at J2000 mean longitude; transfer periapsis oriented for one-way coast. */
+export function helioHohmannFrame(destinationId: DestinationId) {
+  const a2 = targetHelioAu(destinationId)
+  const h = hohmannEarthTo(a2)
+  const a = h.transferA_AU
+  const e = Math.abs(a2 - 1) / (a2 + 1)
+  const outer = a2 > 1
+  const LEarth = HELIO_MEAN_LONG_DEG_J2000.earth * DEG
+  const LArrive = LEarth + Math.PI
+  const LPeri = outer ? LEarth : LArrive
+  const nuStart = outer ? 0 : Math.PI
+  const nuEnd = outer ? Math.PI : Math.PI * 2
+  const nTarget = (2 * Math.PI) / orbitalPeriodDays(a2)
+  const deltaTarget = nTarget * h.oneWayDays
+  const LTargetDepart = LArrive - deltaTarget
+  return {
+    a2,
+    h,
+    a,
+    e,
+    outer,
+    LEarth,
+    LArrive,
+    LPeri,
+    nuStart,
+    nuEnd,
+    LTargetDepart,
+    days: h.oneWayDays,
+  }
+}
+
+export function transferPosAtNu(
+  nu: number,
+  frame: ReturnType<typeof helioHohmannFrame>,
+): THREE.Vector3 {
+  const { a, e, LPeri } = frame
+  const r = (a * (1 - e * e)) / (1 + e * Math.cos(nu))
+  return polarAu(r, LPeri + nu)
+}
+
+/**
+ * Heliocentric planet position (AU) for teaching views.
+ * Non-target bodies: fixed J2000 mean longitudes on circular mean-a orbits.
+ * Target: advances from Hohmann-departure longitude → arrival longitude with progress.
+ * Earth stays at the teaching departure longitude for the outbound leg.
+ */
+export function planetHelioPosition(
+  id: HelioPlanetId,
+  progress: number,
+  destinationId: DestinationId,
+): THREE.Vector3 {
+  const a = HELIO_A_AU[id]
+  if (id === 'earth') {
+    return polarAu(a, HELIO_MEAN_LONG_DEG_J2000.earth * DEG)
+  }
+  if (id === destinationId) {
+    const frame = helioHohmannFrame(destinationId)
+    const p = clamp01(progress)
+    let u = 0
+    if (p < 0.08) u = 0
+    else if (p < 0.16) u = 0
+    else if (p < 0.9) u = easeInOutCubic((p - 0.16) / 0.74)
+    else u = 1
+    const lon = THREE.MathUtils.lerp(frame.LTargetDepart, frame.LArrive, u)
+    return polarAu(a, lon)
+  }
+  return polarAu(a, HELIO_MEAN_LONG_DEG_J2000[id] * DEG)
+}
 
 export type PathSample = {
   position: THREE.Vector3
@@ -134,42 +216,43 @@ function sampleCislunar(p: number): PathSample {
 }
 
 /**
- * Idealized circular coplanar Hohmann (AU), planar — no y-squash.
- * Outer targets: perihelion at Earth (+x); inner: aphelion at Earth (+x).
+ * Idealized circular coplanar Hohmann (AU) — one-way Earth → target only.
+ * Transfer oriented from Earth’s J2000 mean longitude; scrubber = depart → coast → arrive.
  */
 function sampleHelio(p: number, destinationId: DestinationId): PathSample {
-  const a2 = targetHelioAu(destinationId)
-  const h = hohmannEarthTo(a2)
-  const a = h.transferA_AU
-  const e = Math.abs(a2 - 1) / (a2 + 1)
-  const outer = a2 > 1
-  const assume =
-    'Ideal Hohmann: circular coplanar, no plane change, Sun two-body only (teaching — not a flown profile).'
+  const frame = helioHohmannFrame(destinationId)
+  const { a2, h, a, nuStart, nuEnd, days, LEarth } = frame
+  const assume = `Ideal one-way Hohmann: circular coplanar, Sun two-body only (teaching — not flown). ${HELIO_LONGITUDE_ASSUMPTION_EN}`
+  const assumeZh = `理想單程霍曼：圓形共面、僅日心二體（教學——非真實飛行）。${HELIO_LONGITUDE_ASSUMPTION_ZH}`
+  const coastKm = Math.PI * a * KM_PER_AU
+  const periKm = Math.min(1, a2) * KM_PER_AU
+  const apoKm = Math.max(1, a2) * KM_PER_AU
 
-  const posAtNu = (nu: number) => {
-    const r = (a * (1 - e * e)) / (1 + e * Math.cos(nu))
-    if (outer) return new THREE.Vector3(r * Math.cos(nu), r * Math.sin(nu), 0)
-    return new THREE.Vector3(-r * Math.cos(nu), r * Math.sin(nu), 0)
+  const tangentAt = (nu: number) => {
+    const d = 0.01
+    const p0 = transferPosAtNu(nu, frame)
+    const p1 = transferPosAtNu(Math.min(nuEnd, nu + d), frame)
+    return p1.sub(p0).normalize()
   }
 
-  const days = h.oneWayDays
-
+  // 0–0.08 pre-depart at Earth
   if (p < 0.08) {
+    const position = polarAu(1, LEarth)
     return {
-      position: new THREE.Vector3(1, 0.02, 0),
-      tangent: new THREE.Vector3(0, 1, 0),
+      position,
+      tangent: new THREE.Vector3(-Math.sin(LEarth), Math.cos(LEarth), 0).normalize(),
       label: 'Earth orbit (pre-depart)',
       altitudeKm: null,
       radiusKm: null,
       heliocentricAu: 1,
       speedKmS: 29.78,
       distanceTraveledKm: 0,
-      distanceRemainingKm: Math.PI * a * KM_PER_AU,
+      distanceRemainingKm: coastKm,
       transferA_AU: a,
-      periapsisKm: Math.min(1, a2) * KM_PER_AU,
-      apoapsisKm: Math.max(1, a2) * KM_PER_AU,
+      periapsisKm: periKm,
+      apoapsisKm: apoKm,
       noteEn: assume,
-      noteZh: '理想霍曼：圓形共面、無變軌面、僅日心二體（教學——非真實飛行）。',
+      noteZh: assumeZh,
       kind: 'coast',
       beginnerCaptionEn: 'In Earth’s solar orbit before departure',
       beginnerCaptionZh: '出發前在地球的太陽軌道',
@@ -178,25 +261,26 @@ function sampleHelio(p: number, destinationId: DestinationId): PathSample {
     }
   }
 
-  if (p < 0.22) {
-    const u = (p - 0.08) / 0.14
-    const nu = u * 0.1
-    const position = posAtNu(nu)
+  // 0.08–0.16 departure burn
+  if (p < 0.16) {
+    const u = (p - 0.08) / 0.08
+    const nu = THREE.MathUtils.lerp(nuStart, nuStart + (nuEnd - nuStart) * 0.04, u)
+    const position = transferPosAtNu(nu, frame)
     return {
       position,
-      tangent: new THREE.Vector3(-Math.sin(nu), Math.cos(nu), 0).normalize(),
+      tangent: tangentAt(nu),
       label: 'departure burn',
       altitudeKm: null,
       radiusKm: null,
       heliocentricAu: position.length(),
       speedKmS: 29.78 + h.dvDepart_kms * u,
       distanceTraveledKm: u * 0.02 * KM_PER_AU,
-      distanceRemainingKm: Math.PI * a * KM_PER_AU,
+      distanceRemainingKm: coastKm,
       transferA_AU: a,
-      periapsisKm: Math.min(1, a2) * KM_PER_AU,
-      apoapsisKm: Math.max(1, a2) * KM_PER_AU,
+      periapsisKm: periKm,
+      apoapsisKm: apoKm,
       noteEn: `Depart Δv ~${h.dvDepart_kms.toFixed(2)} km/s. ${assume}`,
-      noteZh: `出發 Δv 約 ${h.dvDepart_kms.toFixed(2)} km/s。理想霍曼。`,
+      noteZh: `出發 Δv 約 ${h.dvDepart_kms.toFixed(2)} km/s。${assumeZh}`,
       kind: 'powered',
       beginnerCaptionEn: 'Departure burn onto the Hohmann ellipse',
       beginnerCaptionZh: '出發點火進入霍曼橢圓',
@@ -205,29 +289,29 @@ function sampleHelio(p: number, destinationId: DestinationId): PathSample {
     }
   }
 
-  if (p < 0.72) {
-    // Whole outbound transit occupies most of the scrubber so the coast is watchable
-    const u = easeInOutCubic((p - 0.22) / 0.5)
-    const nu = THREE.MathUtils.lerp(0.1, Math.PI, u)
-    const position = posAtNu(nu)
+  // 0.16–0.90 whole outbound coast (majority of scrubber)
+  if (p < 0.9) {
+    const u = easeInOutCubic((p - 0.16) / 0.74)
+    const nu = THREE.MathUtils.lerp(nuStart + (nuEnd - nuStart) * 0.04, nuEnd, u)
+    const position = transferPosAtNu(nu, frame)
     const rKm = position.length() * KM_PER_AU
     const day = (u * days).toFixed(0)
     const label = u > 0.94 ? 'arrival approach' : 'Hohmann coast'
     return {
       position,
-      tangent: new THREE.Vector3(-Math.sin(nu), Math.cos(nu), 0).normalize(),
+      tangent: tangentAt(nu),
       label,
       altitudeKm: null,
       radiusKm: null,
       heliocentricAu: position.length(),
       speedKmS: visVivaSun(rKm, a * KM_PER_AU),
-      distanceTraveledKm: u * Math.PI * a * KM_PER_AU,
-      distanceRemainingKm: (1 - u) * Math.PI * a * KM_PER_AU,
+      distanceTraveledKm: u * coastKm,
+      distanceRemainingKm: (1 - u) * coastKm,
       transferA_AU: a,
-      periapsisKm: Math.min(1, a2) * KM_PER_AU,
-      apoapsisKm: Math.max(1, a2) * KM_PER_AU,
+      periapsisKm: periKm,
+      apoapsisKm: apoKm,
       noteEn: `Hohmann coast a=${a.toFixed(3)} AU · ~${Math.round(days)} d one-way. ${assume}`,
-      noteZh: `霍曼巡航 a=${a.toFixed(3)} AU · 單程約 ${Math.round(days)} 日。理想共面圓軌。`,
+      noteZh: `霍曼巡航 a=${a.toFixed(3)} AU · 單程約 ${Math.round(days)} 日。${assumeZh}`,
       kind: 'coast',
       beginnerCaptionEn: `Coasting the whole way to ${destinationId} (~${Math.round(days)} days)`,
       beginnerCaptionZh: `全程巡航前往 ${destinationId}（約 ${Math.round(days)} 日）`,
@@ -236,55 +320,29 @@ function sampleHelio(p: number, destinationId: DestinationId): PathSample {
     }
   }
 
-  if (p < 0.82) {
-    const u = (p - 0.72) / 0.1
-    return {
-      position: new THREE.Vector3(a2, 0.01 * (1 - u), 0),
-      tangent: new THREE.Vector3(0, 1, 0),
-      label: 'arrival burn',
-      altitudeKm: null,
-      radiusKm: null,
-      heliocentricAu: a2,
-      speedKmS: Math.sqrt(MU_SUN_KM3_S2 / (a2 * KM_PER_AU)),
-      distanceTraveledKm: Math.PI * a * KM_PER_AU,
-      distanceRemainingKm: Math.PI * a * KM_PER_AU,
-      transferA_AU: a,
-      periapsisKm: Math.min(1, a2) * KM_PER_AU,
-      apoapsisKm: Math.max(1, a2) * KM_PER_AU,
-      noteEn: `Arrive Δv ~${h.dvArrive_kms.toFixed(2)} km/s at ${a2} AU. ${assume}`,
-      noteZh: `到達 Δv 約 ${h.dvArrive_kms.toFixed(2)} km/s（${a2} AU）。理想霍曼。`,
-      kind: 'powered',
-      beginnerCaptionEn: `Arrival burn at ${destinationId}`,
-      beginnerCaptionZh: `在 ${destinationId} 到達點火`,
-      timeLabelEn: `Day ~${Math.round(days)}`,
-      timeLabelZh: `約第 ${Math.round(days)} 日`,
-    }
-  }
-
-  const u = easeInOutCubic((p - 0.82) / 0.18)
-  const nu = Math.PI * (1 - u)
-  const position = posAtNu(nu)
-  position.y = -Math.abs(position.y)
+  // 0.90–1.00 arrival burn — end of one-way timeline
+  const u = (p - 0.9) / 0.1
+  const position = transferPosAtNu(nuEnd, frame)
   return {
     position,
-    tangent: new THREE.Vector3(Math.sin(nu), -Math.cos(nu), 0).normalize(),
-    label: 'return Hohmann leg',
+    tangent: new THREE.Vector3(-Math.sin(frame.LArrive), Math.cos(frame.LArrive), 0).normalize(),
+    label: u < 0.5 ? 'arrival burn' : 'arrived',
     altitudeKm: null,
     radiusKm: null,
-    heliocentricAu: position.length(),
-    speedKmS: visVivaSun(position.length() * KM_PER_AU, a * KM_PER_AU),
-    distanceTraveledKm: (1 + u) * Math.PI * a * KM_PER_AU,
-    distanceRemainingKm: (1 - u) * Math.PI * a * KM_PER_AU,
+    heliocentricAu: a2,
+    speedKmS: Math.sqrt(MU_SUN_KM3_S2 / (a2 * KM_PER_AU)),
+    distanceTraveledKm: coastKm,
+    distanceRemainingKm: 0,
     transferA_AU: a,
-    periapsisKm: Math.min(1, a2) * KM_PER_AU,
-    apoapsisKm: Math.max(1, a2) * KM_PER_AU,
-    noteEn: `Symmetric teaching return. ${assume}`,
-    noteZh: '對稱教學回程。理想霍曼。',
-    kind: 'coast',
-    beginnerCaptionEn: 'Returning toward Earth’s orbit',
-    beginnerCaptionZh: '返回地球軌道',
-    timeLabelEn: `Return ~${((1 - u) * days).toFixed(0)} d`,
-    timeLabelZh: `返回約 ${((1 - u) * days).toFixed(0)} 日`,
+    periapsisKm: periKm,
+    apoapsisKm: apoKm,
+    noteEn: `Arrive Δv ~${h.dvArrive_kms.toFixed(2)} km/s at ${a2} AU (one-way). ${assume}`,
+    noteZh: `到達 Δv 約 ${h.dvArrive_kms.toFixed(2)} km/s（${a2} AU，單程）。${assumeZh}`,
+    kind: 'powered',
+    beginnerCaptionEn: `Arrival burn at ${destinationId}`,
+    beginnerCaptionZh: `在 ${destinationId} 到達點火`,
+    timeLabelEn: `Day ~${Math.round(days)}`,
+    timeLabelZh: `約第 ${Math.round(days)} 日`,
   }
 }
 
@@ -300,17 +358,11 @@ export function transferCurvePoints(destinationId: DestinationId, segments = 140
     }
     return pts
   }
-  const a2 = targetHelioAu(destinationId)
-  const h = hohmannEarthTo(a2)
-  const a = h.transferA_AU
-  const e = Math.abs(a2 - 1) / (a2 + 1)
-  const outer = a2 > 1
+  const frame = helioHohmannFrame(destinationId)
   const pts: THREE.Vector3[] = []
   for (let i = 0; i <= segments; i++) {
-    const nu = (i / segments) * Math.PI
-    const rAu = (a * (1 - e * e)) / (1 + e * Math.cos(nu))
-    if (outer) pts.push(new THREE.Vector3(rAu * Math.cos(nu), rAu * Math.sin(nu), 0))
-    else pts.push(new THREE.Vector3(-rAu * Math.cos(nu), rAu * Math.sin(nu), 0))
+    const nu = THREE.MathUtils.lerp(frame.nuStart, frame.nuEnd, i / segments)
+    pts.push(transferPosAtNu(nu, frame))
   }
   return pts
 }

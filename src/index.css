@@ -314,12 +314,10 @@ body {
   cursor: grabbing;
 }
 
+/* Sidebar vehicle silhouette — not positioned over the canvas */
 .vehicle-inset {
-  position: absolute;
-  top: 0.65rem;
-  left: 0.65rem;
-  z-index: 5;
-  width: min(13.5rem, 46vw);
+  position: relative;
+  width: 100%;
   pointer-events: none;
   border-radius: 12px;
   border: 1px solid rgba(61, 214, 198, 0.35);

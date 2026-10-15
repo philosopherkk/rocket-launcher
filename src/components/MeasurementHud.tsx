@@ -3,6 +3,8 @@ import type { DestinationId } from '../data/destinations'
 import {
   EARTH_RADIUS_KM,
   HELIO_BODY_EXAGGERATION,
+  HELIO_LONGITUDE_ASSUMPTION_EN,
+  HELIO_LONGITUDE_ASSUMPTION_ZH,
   MOON_DISTANCE_EARTH_RADII,
   MOON_DISTANCE_KM,
   STACK_HEIGHT_M,
@@ -80,8 +82,11 @@ export function MeasurementHud({
           </div>
           <p className="scale-exag">
             {locale === 'en'
-              ? `Planet spheres ×${HELIO_BODY_EXAGGERATION}; orbital distances true AU.`
-              : `行星球體 ×${HELIO_BODY_EXAGGERATION}；軌道距離為真實 AU。`}
+              ? `Planet spheres ×${HELIO_BODY_EXAGGERATION}; orbital distances true AU. One-way Earth→target.`
+              : `行星球體 ×${HELIO_BODY_EXAGGERATION}；軌道距離為真實 AU。單程地球→目標。`}
+          </p>
+          <p className="scale-exag">
+            {locale === 'en' ? HELIO_LONGITUDE_ASSUMPTION_EN : HELIO_LONGITUDE_ASSUMPTION_ZH}
           </p>
         </>
       )}

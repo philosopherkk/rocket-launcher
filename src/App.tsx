@@ -8,6 +8,7 @@ import { PhasePanel } from './components/PhasePanel'
 import { SceneErrorBoundary } from './components/SceneErrorBoundary'
 import { TextureStatusChip } from './components/TextureStatusChip'
 import { Timeline } from './components/Timeline'
+import { VehicleInset } from './components/VehicleInset'
 import { VehiclePanel } from './components/VehiclePanel'
 import { ViewerBar } from './components/ViewerBar'
 import {
@@ -16,10 +17,12 @@ import {
   kmToLogDist,
   LOG_DIST_STEP,
   logDistToKm,
+  showDetailedShip,
 } from './lib/kmCamera'
 import { t } from './data/i18n'
 import { useMissionState } from './hooks/useMissionState'
 import { isCislunar } from './lib/transferGeometry'
+import { isNearEarthProgress, vehiclePose } from './lib/vehiclePath'
 
 const DEFAULT_ORBIT: CameraOrbit = { yaw: 0.85, pitch: 0.38 }
 
@@ -236,6 +239,21 @@ export default function App() {
         </div>
 
         <div className="side">
+          {/* Vehicle scale box beside the scene — never overlays the 3D canvas */}
+          {(() => {
+            const pose = vehiclePose(progress, destinationId)
+            const showInset = isCislunar(destinationId)
+              ? isNearEarthProgress(progress) || showDetailedShip(cameraKm || logDistToKm(logDist))
+              : progress < 0.2
+            return (
+              <VehicleInset
+                locale={locale}
+                shipOnly={pose.shipOnly || !!pose.booster}
+                plume={pose.plume}
+                visible={showInset}
+              />
+            )
+          })()}
           <PhasePanel
             locale={locale}
             difficulty={difficulty}

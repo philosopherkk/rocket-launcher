@@ -89,8 +89,8 @@ Labeled **idealized** in the HUD. Scrubber and HUD times/distances follow the sa
 | Path | Geometry | What is idealized | What is true-scale |
 | --- | --- | --- | --- |
 | **Moon** | Patched-conic: pad → gravity turn → circular LEO → prograde TLI at periapsis → Kepler transfer ellipse (Earth at one focus; peri≈LEO, apo≈mean lunar distance 384,400 km) → lunar vicinity → return arc (southern branch) → entry | No lunar gravity SOI capture dynamics; schematic LOI/TEI; phase scrubber durations illustrative | Distances in true km (1 unit = 1 km); half-period ≈ π√(a³/μ⊕) for coast day labels |
-| **Mars / Venus / Mercury / Jupiter** | Circular coplanar Hohmann: departure burn → coast ν:0→π → arrival burn → optional teaching return leg | No plane change, no ephemeris, no escape/capture/landing Δv beyond two-body Hohmann; planets parked on +x at mean *a* | Orbital distances true AU; body spheres ×`HELIO_BODY_EXAGGERATION` (labeled separately) |
-| **Reference planets on helio views** | Mercury…Jupiter shown at mean heliocentric *a* (AU) with orbit rings | Angular positions are a scale ladder, not a date ephemeris | Distances true AU |
+| **Mars / Venus / Mercury / Jupiter** | Circular coplanar **one-way** Hohmann: departure → coast → arrival (no return leg). Transfer oriented from Earth’s J2000 mean longitude | No plane change, no escape/capture/landing Δv beyond two-body Hohmann; scrubber is outbound-only | Orbital distances true AU; body spheres ×`HELIO_BODY_EXAGGERATION` (HUD-labeled) |
+| **Reference planets on helio views** | Mercury…Jupiter at mean heliocentric *a* (AU) with **J2000 mean longitudes L** (JPL SSD approx. elements) — not collinear on +x. Target advances from Hohmann-departure longitude to arrival intercept | Fixed educational epoch snapshot, not a live ephemeris; Earth held at departure longitude for the outbound teaching leg | Distances true AU |
 
 **Playback:** base timeline 120 s at 1×; default **10×** (~12 s full transit, watchable); **100× / 1000×** for fast coast. Segment-aware camera keeps the craft framed from departure through arrival.
 

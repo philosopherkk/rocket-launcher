@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Forbid absolute public asset paths in src
+        run: |
+          if rg "['\"\`]/(textures|models|fonts)" src; then
+            echo "Use publicUrl() for assets under /textures, /models, /fonts"
+            exit 1
+          fi
+      - run: npm test
+      - run: npm run build

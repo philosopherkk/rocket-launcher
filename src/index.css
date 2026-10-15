@@ -770,6 +770,18 @@ body {
   padding: 0;
 }
 
+.phase-tick.inactive {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.timeline-warp-badge,
+.timeline-mission-time {
+  font-size: 0.78rem;
+  color: var(--muted, #8a9bb0);
+  margin-left: 0.5rem;
+}
+
 .phase-tick.active {
   background: var(--accent-2);
   color: #1a1208;

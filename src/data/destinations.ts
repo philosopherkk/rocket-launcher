@@ -1,4 +1,4 @@
-import { formatDays, formatKms, hohmannEarthTo } from './orbital'
+import { departureFromLeoDv, formatDays, formatKms, hohmannEarthTo } from './orbital'
 import type { Difficulty, Locale } from './phases'
 
 export type DestinationId = 'moon' | 'mars' | 'venus' | 'mercury' | 'jupiter'
@@ -185,10 +185,37 @@ export const destinations: Destination[] = [
         },
         {
           id: 'hohmann-arrive',
-          label: { en: 'Ideal Hohmann arrive burn (Mars heliocentric)', 'zh-Hant': '理想霍曼到達點火（火星日心圓軌）' },
+          label: {
+            en: 'Heliocentric velocity match at Mars (≈ v∞)',
+            'zh-Hant': '火星日心速度匹配（≈ v∞）',
+          },
           value: {
             en: formatKms(marsH.dvArrive_kms),
             'zh-Hant': formatKms(marsH.dvArrive_kms),
+          },
+          note: {
+            en: 'Capture / aerocapture at Mars not included.',
+            'zh-Hant': '不含火星捕獲／氣動捕獲。',
+          },
+        },
+        {
+          id: 'leo-depart',
+          label: { en: 'LEO departure burn (from v∞ at Earth)', 'zh-Hant': '近地軌道出發點火（地球 v∞）' },
+          value: {
+            en: formatKms(departureFromLeoDv(marsH.dvDepart_kms)),
+            'zh-Hant': formatKms(departureFromLeoDv(marsH.dvDepart_kms)),
+          },
+          note: {
+            en: 'Circular LEO ~6571 km; teaching patched-conic stack on top of heliocentric depart.',
+            'zh-Hant': '圓形近地軌道約 6571 km；在日心出發之上疊加教學拼接圓錐。',
+          },
+        },
+        {
+          id: 'launch-window',
+          label: { en: 'Launch-window phase angle (Earth→Mars)', 'zh-Hant': '發射窗口相位角（地→火）' },
+          value: {
+            en: `${marsH.launchWindowPhaseDeg.toFixed(0)}°`,
+            'zh-Hant': `${marsH.launchWindowPhaseDeg.toFixed(0)}°`,
           },
         },
         {

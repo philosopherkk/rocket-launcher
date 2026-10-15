@@ -182,6 +182,51 @@ export const phaseOverlays: OverlayMap = {
       },
     },
   },
+  jupiter: {
+    surface: {
+      en: {
+        beginner: {
+          title: 'Jupiter flyby / capture orbit',
+          narrative:
+            'There is no solid surface on Jupiter. Missions either fly past or enter orbit around the planet — not a landing.',
+          physics: 'Deep gravity well and intense radiation; crewed Starship surface landing is not a physical option.',
+          engineering: 'Galilean moon tours or orbiters use gravity assists and heavy shielding — not Starship HLS-style landings.',
+        },
+        intermediate: {
+          title: 'Flyby or Jovian orbit (no landing)',
+          narrative: 'Public Starship goals focus on Moon/Mars. Jupiter is shown for energy/time scale only.',
+          physics: 'Ideal Hohmann arrival is a heliocentric velocity match, not a surface touchdown.',
+          engineering: 'Capture into orbit around Jupiter can demand large further Δv or multi-assist tours.',
+        },
+        advanced: {
+          title: 'Outer-planet arrival (comparison)',
+          narrative: 'Historical missions (Galileo, Juno class) used assists and multi-year cruises.',
+          physics: 'Radiation belts and deep gravity dominate feasibility beyond Δv tables.',
+          engineering: 'No public Starship Jupiter surface architecture — omit landing from teaching copy.',
+        },
+      },
+      'zh-Hant': {
+        beginner: {
+          title: '木星飛掠／捕獲軌道',
+          narrative: '木星沒有固體表面。任務只能飛掠或進入行星軌道——無法「著陸」。',
+          physics: '深重力井與強輻射；載人 Starship 不可能在木星表面著陸。',
+          engineering: '伽利略衛星巡遊或軌道器需重力助推與厚重屏蔽——非 HLS 式著陸。',
+        },
+        intermediate: {
+          title: '飛掠或木星軌道（無著陸）',
+          narrative: '公開 Starship 目標在月球／火星。木星僅用於能量／時間尺度比較。',
+          physics: '理想霍曼到達是日心速度匹配，非表面著陸。',
+          engineering: '被捕獲進入木星軌道還可能需要大量 Δv 或多重助推。',
+        },
+        advanced: {
+          title: '外行星到達（比較）',
+          narrative: '歷史任務（Galileo、Juno 級）使用助推與多年巡航。',
+          physics: '輻射帶與深重力主導可行性，遠超 Δv 表。',
+          engineering: '無公開 Starship 木星表面架構——教學文案省略著陸。',
+        },
+      },
+    },
+  },
 }
 
 function genericPlanetaryCopy(

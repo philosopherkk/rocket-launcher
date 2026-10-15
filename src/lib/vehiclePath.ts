@@ -65,7 +65,7 @@ export function vehiclePose(progress: number, destinationId: DestinationId): Veh
   const landClearance = getDestination(destinationId).visual.radius + 1.15
   const pad = earthSurface(0.62, 0.42)
   const p = Math.min(1, Math.max(0, progress))
-  const phase = phaseAtProgress(p)
+  const phase = phaseAtProgress(p, destinationId)
   const nearEarth = isNearEarthProgress(p)
 
   let position = pad.clone()
@@ -180,8 +180,9 @@ export function vehiclePose(progress: number, destinationId: DestinationId): Veh
 export function cameraFraming(
   progress: number,
   pose: VehiclePose,
+  destinationId: DestinationId = 'moon',
 ): { offset: THREE.Vector3; look: THREE.Vector3; fov: number } {
-  const phase = phaseAtProgress(progress)
+  const phase = phaseAtProgress(progress, destinationId)
   const look = pose.position.clone()
   const R = VEHICLE_EARTH_RADIUS
   let offset: THREE.Vector3

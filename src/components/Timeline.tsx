@@ -1,28 +1,61 @@
-import { phases, type Locale } from '../data/phases'
+import { useMemo } from 'react'
+import { phases, isPhaseApplicable, type Locale, type MissionPhase } from '../data/phases'
 import { t } from '../data/i18n'
+import type { DestinationId } from '../data/destinations'
 import { formatPlaybackRate, PLAYBACK_RATES, type PlaybackRate } from '../lib/playback'
+import { samplePath } from '../lib/transferGeometry'
+import { craftKmAt } from '../lib/craftKm'
+import { isCislunar } from '../lib/transferGeometry'
 
 type Props = {
   locale: Locale
+  destinationId: DestinationId
   progress: number
   playing: boolean
   playbackRate: PlaybackRate
   phaseIndex: number
+  phase: MissionPhase
   onProgress: (p: number) => void
   onTogglePlay: () => void
   onPlaybackRate: (rate: PlaybackRate) => void
+  onReset?: () => void
 }
 
 export function Timeline({
   locale,
+  destinationId,
   progress,
   playing,
   playbackRate,
   phaseIndex,
+  phase,
   onProgress,
   onTogglePlay,
   onPlaybackRate,
+  onReset,
 }: Props) {
+  const missionTime = useMemo(() => {
+    if (isCislunar(destinationId)) {
+      const c = craftKmAt(progress)
+      return locale === 'en' ? c.timeLabelEn : c.timeLabelZh
+    }
+    const s = samplePath(progress, destinationId)
+    return locale === 'en' ? s.timeLabelEn : s.timeLabelZh
+  }, [destinationId, progress, locale])
+
+  const phaseTitle = phase.copy[locale].beginner.title
+  const valueText = `${phaseTitle} · ${missionTime}`
+
+  const copyLink = () => {
+    const q = new URLSearchParams({
+      dest: destinationId,
+      lang: locale,
+      level: 'beginner',
+    })
+    const url = `${window.location.origin}${window.location.pathname}?${q.toString()}`
+    void navigator.clipboard?.writeText(url)
+  }
+
   return (
     <div className="timeline">
       <div className="timeline-top">
@@ -45,6 +78,20 @@ export function Timeline({
         </div>
         <span className="timeline-label">{t(locale, 'timeline')}</span>
         <span className="timeline-hint">{t(locale, 'scrubHint')}</span>
+        <span className="timeline-warp-badge" title={t(locale, 'timeWarpHint')}>
+          {t(locale, 'timeWarpBadge')}
+        </span>
+        <span className="timeline-mission-time" aria-live="polite">
+          {t(locale, 'measTime')}: {missionTime}
+        </span>
+        <button type="button" className="rate-btn" onClick={copyLink}>
+          {t(locale, 'copyLink')}
+        </button>
+        {onReset && (
+          <button type="button" className="rate-btn" onClick={onReset}>
+            {t(locale, 'resetLab')}
+          </button>
+        )}
       </div>
       <input
         type="range"
@@ -54,19 +101,22 @@ export function Timeline({
         onChange={(e) => onProgress(Number(e.target.value) / 1000)}
         className="scrubber"
         aria-label={t(locale, 'timeline')}
+        aria-valuetext={valueText}
       />
       <div className="phase-ticks">
-        {phases.map((phase, i) => {
-          const mid = (phase.start + phase.end) / 2
-          const copy = phase.copy[locale].beginner
+        {phases.map((ph, i) => {
+          const mid = (ph.start + ph.end) / 2
+          const copy = ph.copy[locale].beginner
+          const applicable = isPhaseApplicable(destinationId, ph.id)
           return (
             <button
-              key={phase.id}
+              key={ph.id}
               type="button"
-              className={`phase-tick${i === phaseIndex ? ' active' : ''}`}
+              disabled={!applicable}
+              className={`phase-tick${i === phaseIndex ? ' active' : ''}${applicable ? '' : ' inactive'}`}
               style={{ left: `${mid * 100}%` }}
-              onClick={() => onProgress(phase.start + 0.001)}
-              title={copy.title}
+              onClick={() => applicable && onProgress(ph.start + 0.001)}
+              title={applicable ? copy.title : t(locale, 'phaseNotModeled')}
             >
               <span>{i + 1}</span>
             </button>

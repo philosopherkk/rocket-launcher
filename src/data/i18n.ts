@@ -90,6 +90,11 @@ const ui = {
     trueKmScale: 'True km scale (1 unit = 1 km)',
     playbackRate: 'Speed',
     playbackRateHint: 'Playback rate — 10× default; 100× / 1000× for fast coast',
+    timeWarpBadge: 'Time-warped scrubber',
+    timeWarpHint: 'Phase lengths are educational, not proportional to real mission duration.',
+    copyLink: 'Copy link',
+    resetLab: 'Reset',
+    phaseNotModeled: 'Not modeled for this one-way destination',
   },
   'zh-Hant': {
     brand: 'Starship 目的地實驗室',
@@ -179,6 +184,11 @@ const ui = {
     trueKmScale: '真實公里比例（1 單位 = 1 公里）',
     playbackRate: '速率',
     playbackRateHint: '播放速率——預設 10×；巡航可用 100×／1000×',
+    timeWarpBadge: '時間壓縮時間軸',
+    timeWarpHint: '各階段長度為教學用，與真實任務時長不成比例。',
+    copyLink: '複製連結',
+    resetLab: '重設',
+    phaseNotModeled: '此單程目的地未模擬此階段',
   },
 } as const
 

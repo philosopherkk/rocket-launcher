@@ -45,19 +45,20 @@ export function autoDistanceKm(progress: number): number {
   const p = Math.min(1, Math.max(0, progress))
   if (p < 0.08) return 0.9 // pad
   if (p < 0.2) return 8 + ((p - 0.08) / 0.12) * 220 // ascent
-  if (p < 0.32) return 400 + ((p - 0.2) / 0.12) * 2_200 // LEO
-  if (p < 0.36) return 2_500 // TLI — see burn + Earth limb
-  if (p < 0.62) {
+  if (p < 0.3) return 400 + ((p - 0.2) / 0.1) * 2_200 // LEO
+  if (p < 0.34) return 2_500 // TLI — see burn + Earth limb
+  if (p < 0.56) {
     // Outbound coast — frame craft; stand-off tracks transfer radius
-    const u = (p - 0.36) / 0.26
+    const u = (p - 0.34) / 0.22
     return 8_000 + u * 220_000
   }
-  if (p < 0.72) return 12_000 // lunar vicinity
-  if (p < 0.86) {
-    const u = (p - 0.72) / 0.14
+  if (p < 0.62) return 8_000 // LOI — Moon + craft
+  if (p < 0.76) return 6_500 // LLO — watch lunar orbit
+  if (p < 0.88) {
+    const u = (p - 0.76) / 0.12
     return 15_000 + (1 - u) * 200_000 // return — pull in toward Earth
   }
-  return 8 + ((p - 0.86) / 0.14) * 80 // entry
+  return 8 + ((p - 0.88) / 0.12) * 80 // entry
 }
 
 export function formatCameraDistance(km: number, locale: 'en' | 'zh-Hant'): string {

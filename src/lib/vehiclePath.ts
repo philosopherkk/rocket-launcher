@@ -39,7 +39,7 @@ export function targetPos(destinationId: DestinationId): THREE.Vector3 {
 
 /** Progress bands where Earth fills the frame — rocket must not be cartoon-huge */
 export function isNearEarthProgress(progress: number): boolean {
-  return progress < 0.36 || progress > 0.84
+  return progress < 0.34 || progress > 0.86
 }
 
 function orientAlong(dir: THREE.Vector3): THREE.Quaternion {

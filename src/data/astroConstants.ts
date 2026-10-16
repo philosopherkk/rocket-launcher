@@ -22,6 +22,38 @@ export const LEO_RADIUS_KM = EARTH_RADIUS_KM + LEO_ALTITUDE_KM
 export const MU_EARTH_KM3_S2 = 398_600
 export const LEO_SPEED_KM_S = Math.sqrt(MU_EARTH_KM3_S2 / LEO_RADIUS_KM)
 
+/** Lunar GM (km³/s²) — NASA / IAU fact-sheet class */
+export const MU_MOON_KM3_S2 = 4902.8
+/**
+ * Teaching low lunar orbit altitude (Apollo-class ~100 km circular LLO).
+ * Idealized; not a Starship HLS flight rule (public HLS often targets NRHO).
+ */
+export const LUNAR_ORBIT_ALTITUDE_KM = 100
+export const LUNAR_ORBIT_RADIUS_KM = MOON_RADIUS_KM + LUNAR_ORBIT_ALTITUDE_KM
+export const LUNAR_ORBIT_SPEED_KM_S = Math.sqrt(MU_MOON_KM3_S2 / LUNAR_ORBIT_RADIUS_KM)
+
+/** Karman line teaching altitude (Fédération Aéronautique Internationale ~100 km) */
+export const KARMAN_LINE_KM = 100
+
+/**
+ * Characteristic TLI Δv from circular LEO onto the teaching transfer (vis-viva).
+ * Order matches Apollo/textbook ~3.1–3.2 km/s — not a published Starship burn table.
+ */
+export const TLI_DV_KM_S = (() => {
+  const a = (LEO_RADIUS_KM + MOON_DISTANCE_KM) / 2
+  const vPeri = Math.sqrt(MU_EARTH_KM3_S2 * (2 / LEO_RADIUS_KM - 1 / a))
+  return vPeri - LEO_SPEED_KM_S
+})()
+
+/** Post-TLI speed at LEO periapsis on the transfer ellipse */
+export const TLI_SPEED_KM_S = LEO_SPEED_KM_S + TLI_DV_KM_S
+
+/**
+ * Teaching LOI Δv into circular LLO (~100 km). Apollo LOI order ~0.9 km/s class.
+ * Idealized patched-conic — not a flown Starship profile.
+ */
+export const LOI_DV_KM_S = 0.9
+
 export const MU_SUN_KM3_S2 = 132_712_440_018
 
 export type BodyId = 'earth' | 'moon' | 'mars' | 'venus' | 'mercury' | 'jupiter' | 'sun'
@@ -95,9 +127,9 @@ export const HELIO_BODY_EXAGGERATION = 1800
 /** Phases that prefer vehicle-scale inset (pad / aero / surface detail). */
 export function defaultScaleForProgress(progress: number): 'planet' | 'vehicle' {
   // Match phase bands in phases.ts
-  if (progress < 0.32) return 'vehicle' // prelaunch → staging
-  if (progress < 0.72) return 'planet' // transfer → surface (orbital view)
-  if (progress < 0.86) return 'planet' // return coast
+  if (progress < 0.3) return 'vehicle' // prelaunch → staging / LEO
+  if (progress < 0.76) return 'planet' // transfer → LLO
+  if (progress < 0.88) return 'planet' // return coast
   return 'vehicle' // reentry & landing
 }
 

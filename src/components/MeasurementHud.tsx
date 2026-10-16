@@ -130,7 +130,7 @@ export function MeasurementHud({
             <dd>{sample.heliocentricAu.toFixed(3)} AU</dd>
           </div>
         )}
-        {sample.speedKmS != null && difficulty !== 'beginner' && (
+        {sample.speedKmS != null && (
           <div>
             <dt>{t(locale, 'measSpeed')}</dt>
             <dd>{formatSpeed(sample.speedKmS, locale)}</dd>

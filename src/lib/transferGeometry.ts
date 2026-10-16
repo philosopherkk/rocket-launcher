@@ -170,20 +170,23 @@ function sampleCislunar(p: number): PathSample {
   let traveled = 0
   if (p < 0.08) traveled = 0
   else if (p < 0.2) traveled = ((p - 0.08) / 0.12) * LEO_RADIUS_KM * 0.5
-  else if (p < 0.32) traveled = LEO_RADIUS_KM * 0.5 + ((p - 0.2) / 0.12) * Math.PI * LEO_RADIUS_KM * 0.15
-  else if (p < 0.62) traveled = LEO_RADIUS_KM + ((p - 0.32) / 0.3) * coastArc
-  else if (p < 0.72) traveled = LEO_RADIUS_KM + coastArc
-  else if (p < 0.86) traveled = LEO_RADIUS_KM + coastArc + ((p - 0.72) / 0.14) * coastArc
+  else if (p < 0.3) traveled = LEO_RADIUS_KM * 0.5 + ((p - 0.2) / 0.1) * Math.PI * LEO_RADIUS_KM * 0.15
+  else if (p < 0.56) traveled = LEO_RADIUS_KM + ((p - 0.3) / 0.26) * coastArc
+  else if (p < 0.76) traveled = LEO_RADIUS_KM + coastArc
+  else if (p < 0.88) traveled = LEO_RADIUS_KM + coastArc + ((p - 0.76) / 0.12) * coastArc
   else traveled = LEO_RADIUS_KM + 2 * coastArc
 
   const captions: Record<string, { en: string; zh: string }> = {
     pad: { en: 'On the pad — ready for liftoff', zh: '在發射台上——準備起飛' },
-    'ascent / gravity turn': { en: 'Climbing and pitching into LEO', zh: '上升並轉向進入近地軌道' },
+    'ascent / troposphere': { en: 'Climbing through the lower atmosphere', zh: '穿過對流層上升' },
+    'ascent / gravity turn': { en: 'Gravity turn toward space', zh: '重力轉向進入太空' },
+    'ascent / LEO insertion': { en: 'Inserting into circular LEO', zh: '進入近地圓軌' },
     'LEO parking': { en: 'Coasting in circular LEO', zh: '在近地圓軌停泊滑行' },
     'TLI burn': { en: 'TLI — raising apoapsis toward the Moon', zh: 'TLI——把遠地點推向月球' },
     'trans-lunar coast': { en: 'Whole outbound coast on the transfer ellipse', zh: '整段地月轉移橢圓巡航' },
     'lunar approach': { en: 'Approaching the Moon near apoapsis', zh: '接近遠地點附近的月球' },
-    'lunar orbit / vicinity': { en: 'Near the Moon', zh: '月球附近' },
+    'LOI burn': { en: 'LOI — braking into lunar orbit', zh: 'LOI——煞車進入月軌' },
+    'lunar orbit (LLO)': { en: 'In circular low lunar orbit after LOI', zh: 'LOI 後在圓形低月軌' },
     'Earth-return coast': { en: 'Returning to Earth on the ellipse', zh: '沿橢圓返回地球' },
     'entry corridor': { en: 'Entering Earth’s atmosphere', zh: '進入地球大氣' },
   }

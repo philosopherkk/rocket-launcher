@@ -47,7 +47,7 @@ SpaceX publicly discusses Moon and Mars roles (including on-orbit refilling). **
 | Conjunction ~1000-day RT / long stay; opposition ≤~760-day RT / ~30–50 day stay | [NASA Mars transportation white paper (ACR)](https://www.nasa.gov/wp-content/uploads/2023/10/acr22-wp-mars-transportation.pdf) | Round-trip strategy classes |
 | Opposition vs conjunction trades | NASA NTRS human Mars trajectory papers (e.g. [20150001240](https://ntrs.nasa.gov/api/citations/20150001240/downloads/20150001240.pdf)) | Advanced difficulty context |
 | Idealized Hohmann Δv (Mars/Venus/Mercury/Jupiter) | Circular coplanar two-body calc in-app (`src/data/orbital.ts`) using μ☉ = 132,712,440,018 km³/s² and mean a ≈ 1.524 / 0.723 / 0.387 / 5.203 AU | Labeled **idealized**; excludes escape, capture, plane change, landing |
-| Lunar TLI order ~3.1–3.2 km/s | Standard orbital-mechanics teaching / Apollo-class public order-of-magnitude | Labeled educational; not Starship flight rules |
+| Lunar TLI order ~3.1–3.2 km/s; LOI ~0.9 km/s class; LLO ~100 km | Apollo / textbook public orders; μ☾ from NASA Moon fact-sheet class; vis-viva in-app | Labeled educational; not Starship flight rules; HLS often uses NRHO (cited as alternate) |
 | Example Mars window years | Public exploration launch cadence (e.g. 2020, 2022, 2024…) | Not exact open/close ephemerides |
 
 Trajectory survey tools such as [NASA Trajectory Browser](https://trajbrowser.arc.nasa.gov/user_guide.php) are cited as the class of tool for higher-fidelity Lambert surveys — the app does not scrape live ephemerides.
@@ -88,7 +88,7 @@ Labeled **idealized** in the HUD. Scrubber and HUD times/distances follow the sa
 
 | Path | Geometry | What is idealized | What is true-scale |
 | --- | --- | --- | --- |
-| **Moon** | Patched-conic: pad → gravity turn → circular LEO → prograde TLI at periapsis → Kepler transfer ellipse (Earth at one focus; peri≈LEO, apo≈mean lunar distance 384,400 km) → lunar vicinity → return arc (southern branch) → entry | No lunar gravity SOI capture dynamics; schematic LOI/TEI; phase scrubber durations illustrative | Distances in true km (1 unit = 1 km); half-period ≈ π√(a³/μ⊕) for coast day labels |
+| **Moon** | Patched-conic outbound: pad → gravity turn (atm → Kármán ~100 km) → circular LEO (~300 km teaching) → prograde TLI (Δv≈3.1–3.2 km/s, v≈10.8 km/s) → Kepler transfer (Earth at focus; peri≈LEO, apo≈384,400 km) → **LOI** into circular **LLO ~100 km** (v≈1.63 km/s, μ☾≈4902.8 km³/s²; Apollo-class altitude) → optional return arc → entry. Craft stays on the LLO ring after LOI (not a flyby). | No full SOI/CR3BP; impulsive burns; LLO instead of public HLS NRHO; scrubber durations illustrative; no invented Starship heat rates | Distances in true km (1 unit = 1 km); HUD speeds from vis-viva / circular formulas; coast days ≈ π√(a³/μ⊕) |
 | **Mars / Venus / Mercury / Jupiter** | Circular coplanar **one-way** Hohmann: departure → coast → arrival (no return leg). Transfer oriented from Earth’s J2000 mean longitude | No plane change, no escape/capture/landing Δv beyond two-body Hohmann; scrubber is outbound-only | Orbital distances true AU; body spheres ×`HELIO_BODY_EXAGGERATION` (HUD-labeled) |
 | **Reference planets on helio views** | Mercury…Jupiter at mean heliocentric *a* (AU) with **J2000 mean longitudes L** (JPL SSD approx. elements) — not collinear on +x. Target advances from Hohmann-departure longitude to arrival intercept | Fixed educational epoch snapshot, not a live ephemeris; Earth held at departure longitude for the outbound teaching leg | Distances true AU |
 

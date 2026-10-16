@@ -35,6 +35,7 @@ import {
 import {
   craftKmAt,
   leoPathKm,
+  lunarOrbitPathKm,
   missionPathKm,
   returnPathKm,
   splitPathByKind,
@@ -486,14 +487,14 @@ function CislunarCamera({
     } else {
       // Ascent / LEO / transfer — always track the craft (Earth may fill background)
       focus.copy(craft.position)
-      if (dist > 8_000 && p < 0.55) {
+      if (dist > 8_000 && p < 0.52) {
         // Slight look-back toward Earth so departure context stays in frame
         const w = Math.min(0.35, (dist - 8_000) / 200_000)
         focus.lerp(new THREE.Vector3(0, 0, 0), w)
       }
-      if (dist > 8_000 && p >= 0.55 && p < 0.72) {
+      if (p >= 0.52 && p < 0.76) {
         const moon = new THREE.Vector3(MOON_DIST_KM, 0, 0)
-        focus.lerp(moon, 0.25)
+        focus.lerp(moon, dist > 8_000 ? 0.35 : 0.55)
       }
       desired.set(
         focus.x + sy * cp * dist,
@@ -557,6 +558,7 @@ function TrueScaleCislunarScene({
   const transferPts = useMemo(() => transferPathKm(180), [])
   const returnPts = useMemo(() => returnPathKm(120), [])
   const leoPts = useMemo(() => leoPathKm(96), [])
+  const lloPts = useMemo(() => lunarOrbitPathKm(96), [])
   const mission = useMemo(() => missionPathKm(320), [])
   const { powered, coast } = useMemo(
     () => splitPathByKind(mission.points, mission.kinds),
@@ -564,6 +566,7 @@ function TrueScaleCislunarScene({
   )
   const camKm = userCamera ? logDistToKm(logDist) : autoDistanceKm(progress)
   const showPaths = camKm > 60 && camKm < 900_000
+  const showLlo = progress >= 0.54 || camKm < 40_000
   const flownCount = Math.max(2, Math.floor(progress * (mission.points.length - 1)) + 1)
   const flownPts = useMemo(() => mission.points.slice(0, flownCount), [mission.points, flownCount])
 
@@ -577,6 +580,9 @@ function TrueScaleCislunarScene({
           <Line points={leoPts} color="#7dffb3" transparent opacity={0.4} lineWidth={1} />
           <Line points={transferPts} color="#5a7a9a" transparent opacity={0.45} lineWidth={1} />
           <Line points={returnPts} color="#6a5a8a" transparent opacity={0.35} lineWidth={1} />
+          {showLlo && (
+            <Line points={lloPts} color="#f0c35e" transparent opacity={0.75} lineWidth={2} />
+          )}
           {coast.map((pts, i) =>
             pts.length >= 2 ? (
               <Line key={`c-${i}`} points={pts} color="#5a8aaa" transparent opacity={0.25} lineWidth={1} />

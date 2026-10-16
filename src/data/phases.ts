@@ -170,7 +170,7 @@ export const phases: MissionPhase[] = [
   {
     id: 'staging',
     start: 0.2,
-    end: 0.32,
+    end: 0.3,
     durationLabel: { en: 'Staging → LEO / refill context', 'zh-Hant': '級間分離 → 近地軌道／補加註' },
     copy: {
       en: {
@@ -233,62 +233,65 @@ export const phases: MissionPhase[] = [
   },
   {
     id: 'tli',
-    start: 0.32,
+    start: 0.3,
     end: 0.48,
-    durationLabel: { en: 'Days of coast (illustrative)', 'zh-Hant': '數日滑行（示意）' },
+    durationLabel: { en: 'TLI & multi-day coast', 'zh-Hant': 'TLI 與數日巡航' },
     copy: {
       en: {
         beginner: {
           title: 'Trans-lunar injection & coast',
           narrative:
-            'After building energy in Earth orbit (and refilling, in public lunar architectures), Starship burns to leave for the Moon, then coasts for days along a transfer path.',
+            'After parking in LEO (and refilling, in public lunar architectures), Starship burns prograde to leave for the Moon, then coasts for days on a long ellipse.',
           physics:
-            'A carefully timed burn stretches the orbit so the far side reaches toward the Moon.',
+            'The burn raises the far side of the orbit (apoapsis) out to about the Moon’s distance. Speed jumps from ~7.7 km/s in LEO to ~10.8 km/s just after TLI (teaching vis-viva).',
           engineering:
-            'Navigation, communications, and keeping propellant settled for later burns matter during the quiet coast.',
+            'The burn must start in a narrow window. Propellant must be settled, and the ship needs enough refill propellant in LEO to afford the Δv.',
         },
         intermediate: {
           title: 'TLI burn & lunar transfer',
           narrative:
-            'Public Artemis/HLS materials describe the uncrewed Starship HLS traveling on the order of about six days to a near-rectilinear halo orbit (NRHO) region to await crew—timelines vary by mission design.',
+            'Public Artemis/HLS materials describe uncrewed Starship HLS traveling on the order of about six days toward a near-rectilinear halo orbit (NRHO) region—timelines vary. This lab shows a simpler patched-conic ellipse into low lunar orbit for teaching.',
           physics:
-            'Hohmann-like or free-return-related transfers trade flight time against Δv. Mid-course corrections fix navigation errors.',
+            'Ideal TLI Δv from ~300 km LEO is ~3.1–3.2 km/s (Apollo/textbook class; computed here from vis-viva μ⊕≈3.986×10⁵ km³/s²). Mid-course corrections fix navigation drift over the multi-day coast.',
           engineering:
-            'Deep-space communications delay, thermal control in sunlight/eclipse, and fault management without quick ground intervention are key.',
+            'Challenges: TLI window timing, deep-space comms delay, thermal control in sun/eclipse, cryogenic stratification after LEO refill, and mid-course Δv budget. Starship operational burn tables are unpublished.',
         },
         advanced: {
-          title: 'Cislunar transfer dynamics',
+          title: 'Cislunar transfer dynamics (expert)',
           narrative:
-            'This visualization shows a patched-conic teaching ellipse (LEO perigee → lunar-distance apogee ≈384,400 km). Real HLS profiles may target NRHO and involve Orion rendezvous; cargo-only Starship profiles differ. Educational geometry — not a certified flight plan. TLI Δv order ~3.1–3.2 km/s from LEO (textbook/Apollo class; Starship burn tables unpublished).',
+            'This visualization uses a patched-conic teaching ellipse: circular LEO periapsis (~300 km altitude) → apoapsis at mean Earth–Moon distance ≈384,400 km (NASA/IAU fact-sheet class). Half-period ≈ π√(a³/μ⊕) ~5 days teaching. Real NASA/SpaceX HLS CONOPS often target NRHO and Orion rendezvous rather than a circular 100 km LLO — labeled idealized, not flown.\n\nTLI Δv order ~3.1–3.2 km/s from LEO matches Apollo/textbook public orders (e.g. NASA Basics of Space Flight / historical Apollo mission reports). We do not invent Starship-specific heat rates or certified burn tables. On-orbit refilling (public SpaceX/NASA HLS architecture) is assumed so the stack can afford departure Δv.',
           physics:
-            'Vis-viva on the transfer: v=√[μ(2/r−1/a)]. Lunar SOI ~66,000 km class (textbook) marks where lunar-centered legs dominate in patched-conic intuition. Near NRHO, CR3BP / three-body dynamics and station-keeping matter; two-body patches break down.',
+            'Vis-viva on the transfer: v=√[μ(2/r−1/a)]. At periapsis just after TLI, speed is ~10.8 km/s; near apoapsis geocentric speed falls to a few hundred m/s before lunar gravity dominates. Lunar SOI ~66,000 km class (textbook Laplace SOI) marks where a lunar-centered patch is the better intuition.\n\nIf the TLI burn is short, apoapsis undershoots the Moon and LOI becomes impossible without a costly mid-course. If late or mis-pointed, the arrival asymptote misses the perilune corridor and LOI Δv grows sharply or the pass becomes a flyby.',
           engineering:
-            'Challenges: optical/radiometric navigation, mid-course Δv budget, propellant thermal stratification, and radiation for crew configurations (HLS crew transfer is NASA-led with Orion). Free-return vs non-free-return trades are mission-specific.',
+            'Engineering challenges: (1) TLI window — Earth–Moon geometry and LEO node must align; missing the window costs days of wait or extra mid-course. (2) Mid-course — optical/radiometric navigation over multi-day coast; propellant for TCCMs. (3) Cryogenics — boil-off and settling after LEO tanker refill. (4) Fault management without quick ground loop. (5) Free-return vs non-free-return trades (mission-specific; Apollo 13 free-return is the classic public example). HLS crew transfer remains NASA-led with Orion in public materials.',
         },
       },
       'zh-Hant': {
         beginner: {
           title: '地月轉移點火與滑行',
           narrative:
-            '在地球軌道累積能量（公開月球架構中還會補加註）後，Starship 點火前往月球，再滑行數日沿轉移路徑前進。',
-          physics: '精確時機的點火會把軌道拉長，使遠地點伸向月球。',
-          engineering: '滑行期間需要導航、通訊，並讓推進劑保持沉底以利後續點火。',
+            '在近地軌道停泊（公開月球架構中還會補加註）後，Starship 沿切線點火前往月球，再沿長橢圓滑行數日。',
+          physics:
+            '點火把遠地點抬到約地月距離。速度從近地軌道約 7.7 km/s 升到 TLI 後約 10.8 km/s（教學 vis-viva）。',
+          engineering: '點火必須落在狹窄窗口。推進劑需沉底，且近地軌道補加註後才夠支付 Δv。',
         },
         intermediate: {
           title: 'TLI 點火與地月轉移',
           narrative:
-            '公開的 Artemis／HLS 資料描述無人 Starship HLS 約需六日量級飛向近直線暈軌道（NRHO）區域等待乘員——實際時程隨任務設計而變。',
-          physics: '類似霍曼或自由返回的轉移在飛行時間與 Δv 間取捨。中途修正用來消除導航誤差。',
-          engineering: '深空通訊延遲、日照／陰影下的熱控，以及無法快速仰賴地面介入的故障管理很關鍵。',
+            '公開 Artemis／HLS 資料描述無人 Starship HLS 約需六日量級飛向近直線暈軌道（NRHO）——時程隨任務而變。本實驗室以較簡的拼接圓錐橢圓進入低月軌供教學。',
+          physics:
+            '從約 300 km 近地軌道理想 TLI Δv 約 3.1–3.2 km/s（阿波羅／教科書量級；此處以 μ⊕≈3.986×10⁵ km³/s² 的 vis-viva 計算）。數日巡航中以中途修正消除導航漂移。',
+          engineering:
+            '挑戰：TLI 窗口時機、深空通訊延遲、日照／陰影熱控、近地補加註後的低溫分層，以及中途 Δv 預算。Starship 作業點火表未公開。',
         },
         advanced: {
-          title: '地月空間轉移動力學',
+          title: '地月空間轉移動力學（進階）',
           narrative:
-            '本視覺化為拼接圓錐教學橢圓（近地近地點→地月距離遠地點≈384,400 公里）。真實 HLS 可能以 NRHO 為目標並與 Orion 交會；純貨運剖面不同。教學幾何——非認證飛行計畫。從近地軌道 TLI Δv 約 3.1–3.2 km/s（教科書／阿波羅量級；Starship 點火表未公開）。',
+            '本視覺化使用拼接圓錐教學橢圓：近地圓軌近地點（高度約 300 km）→ 遠地點約地月平均距離 384,400 km（NASA／IAU 事實表量級）。半週期 ≈ π√(a³/μ⊕)，教學約 5 日。真實 NASA／SpaceX HLS 作戰概念常以 NRHO 與 Orion 交會為目標，而非 100 km 圓形低月軌——已標示理想化，非真實飛行。\n\n從近地軌道 TLI Δv 約 3.1–3.2 km/s，與阿波羅／教科書公開數量級相符。我們不虛構 Starship 專屬熱流或認證點火表。假設軌道上補加註（公開 SpaceX／NASA HLS 架構），使飛行器負擔得起出發 Δv。',
           physics:
-            '轉移上 vis-viva：v=√[μ(2/r−1/a)]。月球 SOI 約 66,000 公里量級（教科書）標示拼接圓錐中改以月球為中心的區段。近 NRHO 時圓型限制三體／三體動力學與維持軌道重要；二體拼接失效。',
+            '轉移上 vis-viva：v=√[μ(2/r−1/a)]。TLI 後近地點速度約 10.8 km/s；近遠地點地心速度降至數百 m/s，其後月球重力主導。月球 SOI 約 66,000 km 量級（教科書）標示改以月球為中心的區段。\n\n若 TLI 點火不足，遠地點低於月球，LOI 將不可能或需昂貴中途修正。若過晚或指向偏差，到達漸近線錯過近月點走廊，LOI Δv 急增或變成飛掠。',
           engineering:
-            '挑戰：光學／無線電導航、中途 Δv 預算、推進劑熱分層，以及乘員構型輻射（HLS 乘員轉移由 NASA 與 Orion 主導）。自由返回與非自由返回取捨隨任務而定。',
+            '工程挑戰：（1）TLI 窗口——地月幾何與近地軌道交點須對齊；錯過窗口需等待數日或額外中途修正。（2）中途修正——數日巡航的光學／無線電導航與 TCCM 推進劑。（3）低溫——近地加油後的汽化與沉底。（4）無法快速仰賴地面迴路的故障管理。（5）自由返回與非自由返回取捨（任務相關；阿波羅 13 自由返回為經典公開案例）。公開資料中 HLS 乘員轉移仍由 NASA 與 Orion 主導。',
         },
       },
     },
@@ -297,61 +300,62 @@ export const phases: MissionPhase[] = [
     id: 'lunarApproach',
     start: 0.48,
     end: 0.62,
-    durationLabel: { en: 'Approach & landing burn', 'zh-Hant': '接近與著陸點火' },
+    durationLabel: { en: 'Approach & LOI burn', 'zh-Hant': '接近與 LOI 點火' },
     copy: {
       en: {
         beginner: {
-          title: 'Lunar approach & landing',
+          title: 'Lunar approach & orbit insertion',
           narrative:
-            'Starship slows down and descends to the lunar surface. There is almost no air on the Moon, so wings and parachutes do not help—rockets must do the braking.',
+            'Near the Moon, Starship fires engines backward to slow down and enter a circular lunar orbit — not a straight dive to the surface. Wings and parachutes cannot help; there is essentially no air.',
           physics:
-            'Moon gravity is about one-sixth of Earth’s, but you still need precise rocket burns to land softly.',
+            'Without an atmosphere there is no aerobraking. A braking burn (LOI) drops speed into a closed lunar orbit (~100 km altitude in this teaching model).',
           engineering:
-            'Landing legs, engines, and sensors must work together to avoid rocks and slopes. NASA describes an elevator on Starship HLS for crew/cargo to the surface.',
+            'The burn must be the right size and timed near closest approach. Too little Δv and you fly past; too much and the orbit dips into the Moon.',
         },
         intermediate: {
-          title: 'Powered descent',
+          title: 'LOI into low lunar orbit',
           narrative:
-            'NASA public concepts show Starship HLS performing a braking burn after leaving low lunar orbit, then final descent. HLS height is described as roughly 50 m (~164 ft).',
+            'This lab’s outbound end-state is circular low lunar orbit (LLO) at ~100 km (Apollo-class teaching altitude). Public Artemis HLS materials more often discuss NRHO staging with Orion — we label LLO as idealized for two-body teaching. LOI Δv order ~0.9 km/s class (Apollo public order-of-magnitude).',
           physics:
-            'Without atmosphere, there is no aerobraking. All Δv comes from propulsion. Plume–surface interaction can loft dust (regolith).',
+            'Circular LLO speed √(μ☾/r) ≈ 1.63 km/s at 100 km (μ☾≈4902.8 km³/s²). Approach is faster; LOI removes the excess. Periapsis/apoapsis both equal the LLO radius after a successful circularization.',
           engineering:
-            'Hazard detection and avoidance, throttleable Raptors in vacuum, and tall-vehicle tip-over stability on uneven ground are major design drivers.',
+            'Challenges: LOI accuracy (timing & pointing), autonomous burn cutoff, mid-course residual errors, and having propellant left after TLI + coast (LEO refill). A late/short burn leaves a flyby or highly elliptical lunar orbit instead of circular LLO.',
         },
         advanced: {
-          title: 'Vacuum landing mechanics',
+          title: 'Lunar orbit insertion mechanics (expert)',
           narrative:
-            'Public materials emphasize uncrewed lunar landing demonstration before crewed use. Exact throttle curves and landing-site certification data remain limited in open sources.',
+            'Outbound teaching profile ends in circular low lunar orbit (LLO), not a surface straight-line or a flyby “dot.” We use ~100 km altitude — the Apollo parking-orbit class cited in public NASA historical materials — with μ☾≈4902.8 km³/s² so circular speed is ≈1.63 km/s. LOI Δv is shown as ~0.9 km/s class (Apollo LOI public order). Idealized patched-conic: we do not simulate full CR3BP capture into NRHO.\n\nNASA’s public Artemis / HLS storyboard emphasizes NRHO rendezvous with Orion and later powered descent from lunar orbit for landing demonstrations. This scrubber’s LLO is a two-body teaching simplification so students can see a closed lunar orbit after braking. Starship-specific LOI throttle schedules and heat rates are unpublished; we do not invent them.\n\nSources class: NASA Moon fact sheet (radius, μ), NASA Artemis/HLS public CONOPS pages, Apollo-era LOI/LLO public orders, NASA Basics of Space Flight (trajectory intuition).',
           physics:
-            'Gravity-turn / pitch-up profiles minimize gravity losses while keeping line-of-sight sensors useful. Exhaust in vacuum expands widely, affecting cratering and sensor blinding.',
+            'Patched-conic intuition: on the Earth-centered transfer, speed near apoapsis is low geocentric; relative to the Moon the approach is hyperbolic until LOI. A retrograde burn at perilune lowers energy into an ellipse or circle about the Moon. For circularization at perilune altitude h: v_circ=√(μ☾/(R☾+h)).\n\nIf LOI is short, eccentricity stays high — perilune may be safe once but apolune stretches, and the next perilune can impact terrain or require another costly burn. If LOI is late (past perilune), you raise or miss the intended perilune and may exit the SOI on a flyby. If LOI is early/long, perilune drops and lithobraking (impact) becomes the failure mode.\n\nUnits: altitudes in km above mean lunar radius 1737.4 km; speeds in km/s; Δv in km/s. Assumptions: coplanar, no mascon perturbations, impulsive LOI, circular target — all labeled teaching idealizations.',
           engineering:
-            'Challenges: engine plume ejecta damaging the vehicle or nearby hardware, cryogenic management after long coast, and abort-to-orbit options from low altitude (details not fully public).',
+            'Engineering challenges stack from earlier phases into LOI:\n(1) LEO orbital refueling — public SpaceX/NASA HLS architecture relies on tanker flights so Starship can afford Earth-departure + LOI (+ later descent) Δv; without refill, the budget fails before LOI.\n(2) Mid-course residuals — navigation error shows up as perilune miss distance; TCCMs must leave LOI feasible.\n(3) LOI accuracy — engine restart after multi-day coast, propellant settling, burn-time cutoff, and attitude control. A few seconds late or short turns “circular LLO” into ellipse or escape.\n(4) Autonomy — light-time delay limits closed-loop ground control during the burn.\n(5) What fails: short burn → flyby or elliptical lunar orbit; long burn → impact; wrong plane → costly plane-change later; wrong epoch → miss the Moon entirely. Descent to the surface (HLS landing) is a separate later burn from lunar orbit in public concepts — not this LOI step.',
         },
       },
       'zh-Hant': {
         beginner: {
-          title: '月球接近與著陸',
+          title: '月球接近與入軌',
           narrative:
-            'Starship 減速並下降到月面。月球幾乎沒有大氣，機翼與降落傘幫不上忙——必須靠火箭煞車。',
-          physics: '月球重力約為地球的六分之一，但仍需精確火箭點火才能軟著陸。',
-          engineering:
-            '著陸腿、引擎與感測器須協同避開岩石與斜坡。NASA 描述 Starship HLS 以電梯運送乘員／貨物到月面。',
+            '接近月球時，Starship 向後點火減速，進入圓形月軌——不是直線衝向月面。幾乎沒有大氣，機翼與降落傘幫不上忙。',
+          physics: '沒有大氣就沒有氣動減速。煞車點火（LOI）把速度降到封閉月軌（本教學模型約 100 km 高度）。',
+          engineering: '點火大小與時機必須靠近最近點。Δv 太小會飛掠而過；太大則軌道會插入月球。',
         },
         intermediate: {
-          title: '動力下降',
+          title: 'LOI 進入低月軌',
           narrative:
-            'NASA 公開概念顯示 Starship HLS 離開低月軌道後執行煞車點火，再進入最終下降。HLS 高度描述約 50 公尺（約 164 英尺）。',
-          physics: '沒有大氣就沒有氣動減速。所有 Δv 來自推進。引擎羽流與月面交互會揚起塵土（表岩屑）。',
-          engineering: '危險偵測與迴避、真空中可節流的 Raptor，以及高挑載具在不平地面的傾覆穩定，是主要設計驅動。',
+            '本實驗室單程終態為約 100 km 圓形低月軌（LLO，阿波羅量級教學高度）。公開 Artemis HLS 資料較常討論與 Orion 的 NRHO 停泊——我們將 LLO 標為二體教學理想化。LOI Δv 約 0.9 km/s 量級（阿波羅公開數量級）。',
+          physics:
+            '100 km 圓形低月軌速度 √(μ☾/r) ≈ 1.63 km/s（μ☾≈4902.8 km³/s²）。接近時更快；LOI 去掉多餘速度。成功圓化後近月點／遠月點皆等於 LLO 半徑。',
+          engineering:
+            '挑戰：LOI 精度（時機與指向）、自主熄火、中途殘差，以及 TLI＋巡航後仍有推進劑（近地補加註）。過晚／過短點火會變成飛掠或高橢圓月軌，而非圓形 LLO。',
         },
         advanced: {
-          title: '真空著陸力學',
+          title: '月球軌道插入力學（進階）',
           narrative:
-            '公開資料強調載人使用前須先完成無人月面著陸演示。精確節流曲線與著陸場認證數據在開放來源中仍有限。',
+            '單程教學剖面終態為圓形低月軌（LLO），不是直線衝月面或飛掠「一點」。我們採用約 100 km 高度——公開 NASA 歷史資料中的阿波羅停泊軌道量級——μ☾≈4902.8 km³/s²，圓軌速度 ≈1.63 km/s。LOI Δv 以約 0.9 km/s 量級呈現（阿波羅 LOI 公開數量級）。理想拼接圓錐：不模擬完整 CR3BP 捕獲進入 NRHO。\n\nNASA 公開 Artemis／HLS 故事板強調與 Orion 的 NRHO 交會，以及之後自月軌動力下降的著陸演示。本時間軸的 LLO 是二體教學簡化，讓學生看到煞車後的封閉月軌。Starship 專屬 LOI 節流與熱流未公開；我們不虛構。\n\n來源類別：NASA 月球事實表（半徑、μ）、NASA Artemis／HLS 公開作戰概念、阿波羅時期 LOI／LLO 公開數量級、NASA Basics of Space Flight（軌跡直覺）。',
           physics:
-            '重力轉彎／仰頭剖面在降低重力損失與維持感測視線間取捨。真空羽流大幅擴散，影響坑蝕與感測器致盲。',
+            '拼接圓錐直覺：地心轉移在遠地點地心速度低；相對月球則接近為雙曲線，直到 LOI。在近月點逆向點火降低能量，成為繞月橢圓或圓軌。在近月點高度 h 圓化：v_circ=√(μ☾/(R☾+h))。\n\n若 LOI 過短，偏心率偏高——近月點或許安全一次，但遠月點拉長，下一次近月點可能撞地或需再耗費推進劑。若 LOI 過晚（已過近月點），會抬高或錯過預定近月點，甚至飛出 SOI。若過早／過長，近月點下降，撞擊成為失效模式。\n\n單位：高度為距月球平均半徑 1737.4 km 之上的 km；速度與 Δv 為 km/s。假設：共面、無質量瘤擾動、脈衝 LOI、圓形目標——皆標示為教學理想化。',
           engineering:
-            '挑戰：羽流噴射物損壞載具或附近硬體、長滑行後的低溫管理，以及低高度中止入軌選項（細節未完全公開）。',
+            '工程挑戰由前段累積到 LOI：\n（1）近地軌道補加註——公開 SpaceX／NASA HLS 架構仰賴加油機，使 Starship 負擔得起地球出發＋LOI（＋之後下降）Δv；無補加註則預算在 LOI 前就失敗。\n（2）中途殘差——導航誤差表現為近月點偏差；TCCM 須使 LOI 仍可行。\n（3）LOI 精度——數日巡航後引擎再啟動、推進劑沉底、點火時長切斷與姿態控制。遲到或過短數秒，就會把「圓形 LLO」變成橢圓或逃逸。\n（4）自主性——光速延遲限制點火期間地面閉環。\n（5）失效模式：過短→飛掠或橢圓月軌；過長→撞擊；錯誤軌道面→之後昂貴變軌；錯誤曆元→完全錯過月球。月面下降（HLS 著陸）在公開概念中是自月軌的另一次點火——不是本 LOI 步驟。',
         },
       },
     },
@@ -359,68 +363,71 @@ export const phases: MissionPhase[] = [
   {
     id: 'surface',
     start: 0.62,
-    end: 0.72,
-    durationLabel: { en: 'Surface stay (high-level)', 'zh-Hant': '月面停留（高階概述）' },
+    end: 0.76,
+    durationLabel: { en: 'Lunar orbit (post-LOI)', 'zh-Hant': '月軌（LOI 後）' },
     copy: {
       en: {
         beginner: {
-          title: 'Surface operations',
+          title: 'In lunar orbit',
           narrative:
-            'On the Moon, explorers can collect samples and run experiments. Starship HLS concepts include an elevator because the vehicle is as tall as a mid-rise building (~50 m).',
+            'After LOI, Starship stays in a circular path around the Moon. You can watch it complete orbits — this is the end of the outbound trip in this lesson (landing would be a later burn).',
           physics:
-            'Lower gravity makes walking and lifting different. Heat and cold swing sharply between sunlight and shadow.',
+            'In a circular lunar orbit, speed stays near 1.6 km/s at ~100 km altitude. The Moon’s weaker gravity means orbital speed is much lower than LEO.',
           engineering:
-            'Power, life support (for crew versions), dust protection, and reliable elevators/airlocks are essential. Many details depend on the specific mission.',
+            'The ship must keep communications, power, and propellant ready for the next burn (descent or return). Public HLS concepts often park in different orbits (e.g. NRHO) before landing.',
         },
         intermediate: {
-          title: 'Lunar surface ops (factual scope)',
+          title: 'Low lunar orbit operations',
           narrative:
-            'NASA describes Artemis surface work: samples, science, and environmental observation. Public Starship HLS art shows elevator egress. Duration targets have evolved with program plans—treat stay length as mission-specific.',
+            'Outbound teaching end-state: circular LLO ~100 km, v≈1.63 km/s, periapsis=apoapsis. Scrubber shows multiple revolutions so insertion is visible. NASA public HLS materials emphasize NRHO staging — LLO here is idealized two-body teaching.',
           physics:
-            'Regolith is abrasive and electrostatically sticky. Thermal cycling stresses materials and seals.',
+            'Period of circular LLO is 2π√(r³/μ☾) ~2 hours class at 100 km. Mascons (mass concentrations) perturb real low lunar orbits — not modeled here.',
           engineering:
-            'Challenges: dust intrusion into mechanisms, communication geometry near polar terrain, and keeping engines/propellant ready for ascent.',
+            'Challenges: station-keeping intuition (even if not animated), thermal cycling in lunar day/night for long stays, and preserving cryogenic propellant for descent or TEI. Surface landing is a separate powered-descent phase in public HLS concepts.',
         },
         advanced: {
-          title: 'Surface systems constraints',
+          title: 'Post-LOI lunar orbit (expert)',
           narrative:
-            'This phase is intentionally high-level: open sources do not provide a full operational checklist for Starship surface systems. Unknowns are labeled rather than invented.',
+            'The craft remains on the drawn LLO ring after LOI — the outbound timeline’s closed end-state. Altitude ~100 km, circular, μ☾-based speed ≈1.63 km/s. This is intentionally not a surface touchdown and not a flyby.\n\nPublic Artemis architecture: Starship HLS may operate from NRHO with Orion; uncrewed landing demos include descent from lunar orbit. Our LLO is the simplest orbit students can see close around the Moon after a braking burn. Assumptions (coplanar circular LLO, no mascons, impulsive LOI) are labeled in the HUD.\n\nReturn on this scrubber (next phases) is an educational Earth-return arc after LLO, distinct from the Orion-centric crewed return in NASA’s public Artemis III-era storyboard.',
           physics:
-            'Polar lighting can leave permanently shadowed regions extremely cold while nearby ridges are sunlit—affecting power and thermal design.',
+            'Closed orbit condition after LOI: specific energy ε=v²/2−μ☾/r < 0 and e≈0 when periapsis≈apoapsis≈R☾+100 km. Watching several revolutions confirms capture. If energy remained positive, the path would be a hyperbola (flyby) — the failure mode of a missed LOI.\n\nCompare LEO (~7.7 km/s at 300 km) vs LLO (~1.63 km/s at 100 km): the factor is roughly √(μ☾ r_LEO / μ⊕ r_LLO), illustrating why lunar orbital speeds feel “slow” after cislunar coast.',
           engineering:
-            'Open questions publicly include final suit interfaces, cargo offload mass budgets, and long-duration cryogenic storage on the surface for extended stays.',
+            'After capture: maintain attitude for thermal/comms, manage residuals so the orbit does not decay into terrain, and keep engines qualified for the next burn. For crewed HLS, NASA materials describe elevator egress only after landing — not while in LLO. Propellant margins after LOI determine whether descent or TEI is still affordable; LEO refill upstream is the public architectural answer to that budget.',
         },
       },
       'zh-Hant': {
         beginner: {
-          title: '月面作業',
+          title: '在月軌上',
           narrative:
-            '在月球上，探索者可採集樣本與進行實驗。Starship HLS 概念包含電梯，因為載具高度約如中層建築（約 50 公尺）。',
-          physics: '低重力使行走與搬運感受不同。日照與陰影之間冷熱變化劇烈。',
-          engineering: '電力、生命維持（乘員版）、防塵與可靠的電梯／氣閘很重要。細節取決於具體任務。',
+            'LOI 之後，Starship 留在繞月圓軌。你可以看它繞行數圈——這是本課單程的終點（著陸會是之後另一次點火）。',
+          physics: '圓形月軌在約 100 km 高度速度約 1.6 km/s。月球重力較弱，軌道速度遠低於近地軌道。',
+          engineering:
+            '載具須維持通訊、電力與推進劑，為下一次點火（下降或返回）就緒。公開 HLS 概念著陸前常停在不同軌道（如 NRHO）。',
         },
         intermediate: {
-          title: '月面作業（事實範圍）',
+          title: '低月軌作業',
           narrative:
-            'NASA 描述 Artemis 月面工作：樣本、科學與環境觀測。公開 Starship HLS 圖像顯示電梯離艦。停留時長隨計畫演進——應視為任務相關。',
-          physics: '表岩屑具磨蝕性且易因靜電附著。熱循環會壓力材料與密封件。',
-          engineering: '挑戰：灰塵侵入機構、近極地地形的通訊幾何，以及為上升保持引擎／推進劑就緒。',
+            '單程教學終態：約 100 km 圓形 LLO，v≈1.63 km/s，近=遠。時間軸顯示多圈以便看見入軌。NASA 公開 HLS 強調 NRHO 停泊——此處 LLO 為理想二體教學。',
+          physics: '100 km 圓形 LLO 週期 2π√(r³/μ☾) 約 2 小時量級。質量瘤會擾動真實低月軌——此處未建模。',
+          engineering:
+            '挑戰：軌道維持直覺（即使未動畫）、長停留時月晝／月夜熱循環，以及為下降或 TEI 保存低溫推進劑。月面著陸在公開 HLS 概念中是另一次動力下降階段。',
         },
         advanced: {
-          title: '月面系統限制',
+          title: 'LOI 後月軌（進階）',
           narrative:
-            '本階段刻意保持高階：開放來源並未提供 Starship 月面系統完整作業清單。未知處會標明，不虛構。',
-          physics: '極地光照可使永久陰影區極冷，而鄰近山脊仍日照——影響電力與熱控設計。',
+            'LOI 之後飛行器留在繪出的 LLO 環上——單程時間軸的封閉終態。高度約 100 km、圓形、依 μ☾ 的速度 ≈1.63 km/s。刻意不是月面著陸，也不是飛掠。\n\n公開 Artemis 架構：Starship HLS 可能自 NRHO 與 Orion 作業；無人著陸演示包含自月軌下降。我們的 LLO 是學生在煞車後能在月球近旁看見的最簡單軌道。假設（共面圓形 LLO、無質量瘤、脈衝 LOI）已在 HUD 標示。\n\n本時間軸其後的返回是離開 LLO 後的教學返地弧，有別於 NASA 公開 Artemis III 時期以 Orion 為中心的載人返回故事板。',
+          physics:
+            'LOI 後封閉軌道條件：比能 ε=v²/2−μ☾/r < 0，且當近≈遠≈R☾+100 km 時 e≈0。繞行數圈可確認捕獲。若能量仍為正，路徑會是雙曲線（飛掠）——即 LOI 失敗模式。\n\n比較近地軌道（300 km 約 7.7 km/s）與 LLO（100 km 約 1.63 km/s）：因子大致 √(μ☾ r_LEO / μ⊕ r_LLO)，說明地月巡航後月軌速度為何顯得「慢」。',
           engineering:
-            '公開的未決問題包含最終航太服介面、貨物卸載質量預算，以及延長停留時月面長期低溫貯存。',
+            '捕獲後：維持熱控／通訊姿態、管理殘差以免軌道衰減撞地，並保持引擎具備下次點火資格。載人 HLS 的公開資料描述電梯僅在著陸後使用——不是在 LLO。LOI 後的推進劑裕度決定下降或 TEI 是否仍負擔得起；上游近地補加註是公開架構對該預算的答案。',
         },
       },
     },
   },
   {
     id: 'return',
-    start: 0.72,
-    end: 0.86,
+    start: 0.76,
+    end: 0.88,
     durationLabel: { en: 'Ascent & Earth return', 'zh-Hant': '上升與返回地球' },
     copy: {
       en: {
@@ -481,7 +488,7 @@ export const phases: MissionPhase[] = [
   },
   {
     id: 'reentry',
-    start: 0.86,
+    start: 0.88,
     end: 1,
     durationLabel: { en: 'Reentry & landing', 'zh-Hant': '再入與著陸' },
     copy: {

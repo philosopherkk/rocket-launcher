@@ -231,6 +231,7 @@ export default function App() {
           </div>
           <Timeline
             locale={locale}
+            difficulty={difficulty}
             destinationId={destinationId}
             progress={progress}
             playing={playing}

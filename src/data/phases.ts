@@ -560,20 +560,22 @@ export function isPhaseApplicable(destinationId: DestinationId, phaseId: PhaseId
 
 export function phaseAtProgress(progress: number, destinationId: DestinationId = 'moon'): MissionPhase {
   const p = Math.min(1, Math.max(0, progress))
-  for (const phase of phases) {
-    if (p >= phase.start && p < phase.end) {
-      if (!isPhaseApplicable(destinationId, phase.id)) {
-        const lastActive = [...phases].reverse().find((ph) => isPhaseApplicable(destinationId, ph.id))
-        return lastActive ?? phases[phases.length - 1]
-      }
-      return phase
+  const lastActive =
+    [...phases].reverse().find((phase) => isPhaseApplicable(destinationId, phase.id)) ??
+    phases[phases.length - 1]
+
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i]
+    // Earlier bands stay half-open. The last active phase, and the phase that
+    // closes the scrubber, include their end so progress 1 stays on the last
+    // active phase instead of falling through.
+    const includeEnd = phase.id === lastActive.id || i === phases.length - 1
+    if (p >= phase.start && (includeEnd ? p <= phase.end : p < phase.end)) {
+      return isPhaseApplicable(destinationId, phase.id) ? phase : lastActive
     }
   }
-  const tail = phases[phases.length - 1]
-  if (!isPhaseApplicable(destinationId, tail.id)) {
-    return phases.find((ph) => isPhaseApplicable(destinationId, ph.id)) ?? tail
-  }
-  return tail
+
+  return lastActive
 }
 
 export function phaseIndexAtProgress(progress: number, destinationId: DestinationId = 'moon'): number {

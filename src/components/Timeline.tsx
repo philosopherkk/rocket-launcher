@@ -1,5 +1,11 @@
 import { useMemo } from 'react'
-import { phases, isPhaseApplicable, type Locale, type MissionPhase } from '../data/phases'
+import {
+  phases,
+  isPhaseApplicable,
+  type Difficulty,
+  type Locale,
+  type MissionPhase,
+} from '../data/phases'
 import { t } from '../data/i18n'
 import type { DestinationId } from '../data/destinations'
 import { formatPlaybackRate, PLAYBACK_RATES, type PlaybackRate } from '../lib/playback'
@@ -9,6 +15,7 @@ import { isCislunar } from '../lib/transferGeometry'
 
 type Props = {
   locale: Locale
+  difficulty: Difficulty
   destinationId: DestinationId
   progress: number
   playing: boolean
@@ -21,8 +28,24 @@ type Props = {
   onReset?: () => void
 }
 
+export function copyLink(
+  destinationId: DestinationId,
+  locale: Locale,
+  difficulty: Difficulty,
+): string {
+  const q = new URLSearchParams({
+    dest: destinationId,
+    lang: locale,
+    level: difficulty,
+  })
+  const origin = typeof window === 'undefined' ? '' : window.location.origin
+  const pathname = typeof window === 'undefined' ? '' : window.location.pathname
+  return `${origin}${pathname}?${q.toString()}`
+}
+
 export function Timeline({
   locale,
+  difficulty,
   destinationId,
   progress,
   playing,
@@ -46,14 +69,8 @@ export function Timeline({
   const phaseTitle = phase.copy[locale].beginner.title
   const valueText = `${phaseTitle} · ${missionTime}`
 
-  const copyLink = () => {
-    const q = new URLSearchParams({
-      dest: destinationId,
-      lang: locale,
-      level: 'beginner',
-    })
-    const url = `${window.location.origin}${window.location.pathname}?${q.toString()}`
-    void navigator.clipboard?.writeText(url)
+  const onCopyLink = () => {
+    void navigator.clipboard?.writeText(copyLink(destinationId, locale, difficulty))
   }
 
   return (
@@ -84,7 +101,7 @@ export function Timeline({
         <span className="timeline-mission-time" aria-live="polite">
           {t(locale, 'measTime')}: {missionTime}
         </span>
-        <button type="button" className="rate-btn" onClick={copyLink}>
+        <button type="button" className="rate-btn" onClick={onCopyLink}>
           {t(locale, 'copyLink')}
         </button>
         {onReset && (

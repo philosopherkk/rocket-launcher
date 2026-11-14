@@ -167,12 +167,15 @@ function sampleCislunar(p: number): PathSample {
   const c = craftKmAt(p)
   const { a } = MOON_TRANSFER
   const coastArc = Math.PI * a
+  // Arc length along teaching path (transfer semi-perimeter ≈ π a)
   let traveled = 0
   if (p < 0.08) traveled = 0
   else if (p < 0.2) traveled = ((p - 0.08) / 0.12) * LEO_RADIUS_KM * 0.5
   else if (p < 0.3) traveled = LEO_RADIUS_KM * 0.5 + ((p - 0.2) / 0.1) * Math.PI * LEO_RADIUS_KM * 0.15
-  else if (p < 0.56) traveled = LEO_RADIUS_KM + ((p - 0.3) / 0.26) * coastArc
-  else if (p < 0.76) traveled = LEO_RADIUS_KM + coastArc
+  else if (p < 0.34) traveled = LEO_RADIUS_KM + ((p - 0.3) / 0.04) * 0.02 * coastArc
+  else if (p < 0.56) traveled = LEO_RADIUS_KM + ((p - 0.34) / 0.22) * coastArc
+  else if (p < 0.62) traveled = LEO_RADIUS_KM + coastArc
+  else if (p < 0.76) traveled = LEO_RADIUS_KM + coastArc + ((p - 0.62) / 0.14) * Math.PI * 2 * (a * 0.01)
   else if (p < 0.88) traveled = LEO_RADIUS_KM + coastArc + ((p - 0.76) / 0.12) * coastArc
   else traveled = LEO_RADIUS_KM + 2 * coastArc
 

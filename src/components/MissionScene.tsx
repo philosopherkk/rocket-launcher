@@ -555,11 +555,12 @@ function TrueScaleCislunarScene({
   userCamera: boolean
   onCameraKm?: (km: number) => void
 }) {
-  const transferPts = useMemo(() => transferPathKm(180), [])
-  const returnPts = useMemo(() => returnPathKm(120), [])
-  const leoPts = useMemo(() => leoPathKm(96), [])
-  const lloPts = useMemo(() => lunarOrbitPathKm(96), [])
-  const mission = useMemo(() => missionPathKm(320), [])
+  // Dense Kepler / circle samples from moonPathGeometry (1 unit = 1 km)
+  const transferPts = useMemo(() => transferPathKm(256), [])
+  const returnPts = useMemo(() => returnPathKm(160), [])
+  const leoPts = useMemo(() => leoPathKm(128), [])
+  const lloPts = useMemo(() => lunarOrbitPathKm(128), [])
+  const mission = useMemo(() => missionPathKm(400), [])
   const { powered, coast } = useMemo(
     () => splitPathByKind(mission.points, mission.kinds),
     [mission],

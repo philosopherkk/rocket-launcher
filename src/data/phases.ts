@@ -315,7 +315,7 @@ export const phases: MissionPhase[] = [
         intermediate: {
           title: 'LOI into low lunar orbit',
           narrative:
-            'This lab’s outbound end-state is circular low lunar orbit (LLO) at ~100 km (Apollo-class teaching altitude). Public Artemis HLS materials more often discuss NRHO staging with Orion — we label LLO as idealized for two-body teaching. LOI Δv order ~0.9 km/s class (Apollo public order-of-magnitude).',
+            'This lab’s outbound end-state is circular low lunar orbit (LLO) at ~100 km (Apollo-class teaching altitude). Public Artemis HLS materials more often discuss NRHO staging with Orion — we label LLO as idealized for two-body teaching. LOI Δv is computed patched-conic ≈0.82 km/s (v∞≈|v_Moon−v_apo|), Apollo public order ~0.9 km/s class.',
           physics:
             'Circular LLO speed √(μ☾/r) ≈ 1.63 km/s at 100 km (μ☾≈4902.8 km³/s²). Approach is faster; LOI removes the excess. Periapsis/apoapsis both equal the LLO radius after a successful circularization.',
           engineering:
@@ -324,7 +324,7 @@ export const phases: MissionPhase[] = [
         advanced: {
           title: 'Lunar orbit insertion mechanics (expert)',
           narrative:
-            'Outbound teaching profile ends in circular low lunar orbit (LLO), not a surface straight-line or a flyby “dot.” We use ~100 km altitude — the Apollo parking-orbit class cited in public NASA historical materials — with μ☾≈4902.8 km³/s² so circular speed is ≈1.63 km/s. LOI Δv is shown as ~0.9 km/s class (Apollo LOI public order). Idealized patched-conic: we do not simulate full CR3BP capture into NRHO.\n\nNASA’s public Artemis / HLS storyboard emphasizes NRHO rendezvous with Orion and later powered descent from lunar orbit for landing demonstrations. This scrubber’s LLO is a two-body teaching simplification so students can see a closed lunar orbit after braking. Starship-specific LOI throttle schedules and heat rates are unpublished; we do not invent them.\n\nSources class: NASA Moon fact sheet (radius, μ), NASA Artemis/HLS public CONOPS pages, Apollo-era LOI/LLO public orders, NASA Basics of Space Flight (trajectory intuition).',
+            'Outbound teaching profile ends in circular low lunar orbit (LLO), not a surface straight-line or a flyby “dot.” Geometry is remade on three.js / R3F (`moonPathGeometry.ts`): Kepler ellipse with Earth at one focus, apoapsis = Moon−LLO so the coast meets the Earthward LLO point continuously. ~100 km altitude (Apollo parking-orbit class), μ☾≈4902.8 km³/s² → v_LLO≈1.63 km/s. LOI Δv = √(v∞²+2μ☾/r)−√(μ☾/r) ≈0.82 km/s with v∞≈|v_Moon−v_apo| (Apollo public order ~0.9 km/s). Idealized patched-conic: we do not simulate full CR3BP capture into NRHO.\n\nNASA’s public Artemis / HLS storyboard emphasizes NRHO rendezvous with Orion and later powered descent from lunar orbit for landing demonstrations. This scrubber’s LLO is a two-body teaching simplification so students can see a closed lunar orbit after braking. Starship-specific LOI throttle schedules and heat rates are unpublished; we do not invent them.\n\nSources class: NASA Moon fact sheet (radius, μ), NASA Artemis/HLS public CONOPS pages, Apollo-era LOI/LLO public orders, NASA Basics of Space Flight (trajectory intuition). Guide curves also dumpable as three.js JSON (`public/geometry/moon-guides.json`).',
           physics:
             'Patched-conic intuition: on the Earth-centered transfer, speed near apoapsis is low geocentric; relative to the Moon the approach is hyperbolic until LOI. A retrograde burn at perilune lowers energy into an ellipse or circle about the Moon. For circularization at perilune altitude h: v_circ=√(μ☾/(R☾+h)).\n\nIf LOI is short, eccentricity stays high — perilune may be safe once but apolune stretches, and the next perilune can impact terrain or require another costly burn. If LOI is late (past perilune), you raise or miss the intended perilune and may exit the SOI on a flyby. If LOI is early/long, perilune drops and lithobraking (impact) becomes the failure mode.\n\nUnits: altitudes in km above mean lunar radius 1737.4 km; speeds in km/s; Δv in km/s. Assumptions: coplanar, no mascon perturbations, impulsive LOI, circular target — all labeled teaching idealizations.',
           engineering:
@@ -342,7 +342,7 @@ export const phases: MissionPhase[] = [
         intermediate: {
           title: 'LOI 進入低月軌',
           narrative:
-            '本實驗室單程終態為約 100 km 圓形低月軌（LLO，阿波羅量級教學高度）。公開 Artemis HLS 資料較常討論與 Orion 的 NRHO 停泊——我們將 LLO 標為二體教學理想化。LOI Δv 約 0.9 km/s 量級（阿波羅公開數量級）。',
+            '本實驗室單程終態為約 100 km 圓形低月軌（LLO，阿波羅量級教學高度）。公開 Artemis HLS 資料較常討論與 Orion 的 NRHO 停泊——我們將 LLO 標為二體教學理想化。LOI Δv 由拼接圓錐計算 ≈0.82 km/s（v∞≈|v_Moon−v_apo|），阿波羅公開約 0.9 km/s 量級。',
           physics:
             '100 km 圓形低月軌速度 √(μ☾/r) ≈ 1.63 km/s（μ☾≈4902.8 km³/s²）。接近時更快；LOI 去掉多餘速度。成功圓化後近月點／遠月點皆等於 LLO 半徑。',
           engineering:
@@ -351,7 +351,7 @@ export const phases: MissionPhase[] = [
         advanced: {
           title: '月球軌道插入力學（進階）',
           narrative:
-            '單程教學剖面終態為圓形低月軌（LLO），不是直線衝月面或飛掠「一點」。我們採用約 100 km 高度——公開 NASA 歷史資料中的阿波羅停泊軌道量級——μ☾≈4902.8 km³/s²，圓軌速度 ≈1.63 km/s。LOI Δv 以約 0.9 km/s 量級呈現（阿波羅 LOI 公開數量級）。理想拼接圓錐：不模擬完整 CR3BP 捕獲進入 NRHO。\n\nNASA 公開 Artemis／HLS 故事板強調與 Orion 的 NRHO 交會，以及之後自月軌動力下降的著陸演示。本時間軸的 LLO 是二體教學簡化，讓學生看到煞車後的封閉月軌。Starship 專屬 LOI 節流與熱流未公開；我們不虛構。\n\n來源類別：NASA 月球事實表（半徑、μ）、NASA Artemis／HLS 公開作戰概念、阿波羅時期 LOI／LLO 公開數量級、NASA Basics of Space Flight（軌跡直覺）。',
+            '單程教學剖面終態為圓形低月軌（LLO），不是直線衝月面或飛掠「一點」。幾何在 three.js／R3F 上重做（`moonPathGeometry.ts`）：地球在焦點的 Kepler 橢圓，遠地點＝月球−LLO，使巡航與向地側 LLO 點連續相接。約 100 km 高度（阿波羅停泊軌道量級），μ☾≈4902.8 km³/s² → v_LLO≈1.63 km/s。LOI Δv＝√(v∞²+2μ☾/r)−√(μ☾/r)≈0.82 km/s，v∞≈|v_Moon−v_apo|（阿波羅公開約 0.9 km/s）。理想拼接圓錐：不模擬完整 CR3BP 捕獲進入 NRHO。\n\nNASA 公開 Artemis／HLS 故事板強調與 Orion 的 NRHO 交會，以及之後自月軌動力下降的著陸演示。本時間軸的 LLO 是二體教學簡化，讓學生看到煞車後的封閉月軌。Starship 專屬 LOI 節流與熱流未公開；我們不虛構。\n\n來源類別：NASA 月球事實表（半徑、μ）、NASA Artemis／HLS 公開作戰概念、阿波羅時期 LOI／LLO 公開數量級、NASA Basics of Space Flight（軌跡直覺）。導引曲線亦可匯出為 three.js JSON（`public/geometry/moon-guides.json`）。',
           physics:
             '拼接圓錐直覺：地心轉移在遠地點地心速度低；相對月球則接近為雙曲線，直到 LOI。在近月點逆向點火降低能量，成為繞月橢圓或圓軌。在近月點高度 h 圓化：v_circ=√(μ☾/(R☾+h))。\n\n若 LOI 過短，偏心率偏高——近月點或許安全一次，但遠月點拉長，下一次近月點可能撞地或需再耗費推進劑。若 LOI 過晚（已過近月點），會抬高或錯過預定近月點，甚至飛出 SOI。若過早／過長，近月點下降，撞擊成為失效模式。\n\n單位：高度為距月球平均半徑 1737.4 km 之上的 km；速度與 Δv 為 km/s。假設：共面、無質量瘤擾動、脈衝 LOI、圓形目標——皆標示為教學理想化。',
           engineering:

@@ -36,11 +36,17 @@ export const LUNAR_ORBIT_SPEED_KM_S = Math.sqrt(MU_MOON_KM3_S2 / LUNAR_ORBIT_RAD
 export const KARMAN_LINE_KM = 100
 
 /**
+ * Transfer apoapsis = Moon distance − LLO radius so the Kepler apoapsis meets the
+ * Earthward LLO point continuously (see moonPathGeometry / craftKm).
+ */
+export const MOON_TRANSFER_RA_KM = MOON_DISTANCE_KM - LUNAR_ORBIT_RADIUS_KM
+
+/**
  * Characteristic TLI Δv from circular LEO onto the teaching transfer (vis-viva).
  * Order matches Apollo/textbook ~3.1–3.2 km/s — not a published Starship burn table.
  */
 export const TLI_DV_KM_S = (() => {
-  const a = (LEO_RADIUS_KM + MOON_DISTANCE_KM) / 2
+  const a = (LEO_RADIUS_KM + MOON_TRANSFER_RA_KM) / 2
   const vPeri = Math.sqrt(MU_EARTH_KM3_S2 * (2 / LEO_RADIUS_KM - 1 / a))
   return vPeri - LEO_SPEED_KM_S
 })()
@@ -49,10 +55,17 @@ export const TLI_DV_KM_S = (() => {
 export const TLI_SPEED_KM_S = LEO_SPEED_KM_S + TLI_DV_KM_S
 
 /**
- * Teaching LOI Δv into circular LLO (~100 km). Apollo LOI order ~0.9 km/s class.
- * Idealized patched-conic — not a flown Starship profile.
+ * Patched-conic LOI Δv into circular LLO: v∞≈|v_Moon−v_apo|, then
+ * Δv = √(v∞²+2μ☾/r)−√(μ☾/r). Apollo-class ~0.8–0.9 km/s. Idealized — not flown Starship.
  */
-export const LOI_DV_KM_S = 0.9
+export const LOI_DV_KM_S = (() => {
+  const a = (LEO_RADIUS_KM + MOON_TRANSFER_RA_KM) / 2
+  const vApo = Math.sqrt(MU_EARTH_KM3_S2 * (2 / MOON_TRANSFER_RA_KM - 1 / a))
+  const vMoon = Math.sqrt(MU_EARTH_KM3_S2 / MOON_DISTANCE_KM)
+  const vInf = Math.abs(vMoon - vApo)
+  const vHyp = Math.sqrt(vInf * vInf + (2 * MU_MOON_KM3_S2) / LUNAR_ORBIT_RADIUS_KM)
+  return vHyp - LUNAR_ORBIT_SPEED_KM_S
+})()
 
 export const MU_SUN_KM3_S2 = 132_712_440_018
 
